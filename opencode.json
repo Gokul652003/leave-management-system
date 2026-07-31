@@ -1,0 +1,27 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "stitch": {
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "enabled": true,
+      "headers": {
+        "X-Goog-Api-Key": "***REMOVED***"
+      }
+    },
+    "jira": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "--from", "git+https://github.com/sooperset/mcp-atlassian",
+        "mcp-atlassian"
+      ],
+      "enabled": true,
+      "env": {
+        "JIRA_URL": "https://gokulkr652003-1779809183261.atlassian.net",
+        "JIRA_USERNAME": "gokulkr652003@gmail.com",
+        "JIRA_API_TOKEN": "***REMOVED***"
+      }
+    }
+  }
+}
