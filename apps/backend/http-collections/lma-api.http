@@ -1,0 +1,23 @@
+# Leave Management API
+# Environments are defined in .vscode/settings.json -> rest-client.environmentVariables
+# Select environment at the bottom-right status bar (or Ctrl+Alt+E)
+# baseUrl = shared across environments
+# jwtToken = set per environment (admin/hr Supabase JWT)
+
+### GET /health - Health check
+GET {{baseUrl}}/health
+Accept: application/json
+
+### POST /employees - Create employee (requires role: admin or hr)
+POST {{baseUrl}}/employees
+Authorization: Bearer {{jwtToken}}
+Content-Type: application/json
+
+{
+  "name": "Ravi Kumar",
+  "email": "r.kumar@acme.corp",
+  "department": "Engineering",
+  "role": "Backend Engineer",
+  "managerId": 2940,
+  "joinDate": "2024-02-01"
+}

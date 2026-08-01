@@ -6,7 +6,6 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { fail } from '../interfaces/api-response.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -30,6 +29,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    response.status(status).json(fail(status, message));
+    response
+      .status(status)
+      .json({ data: null, error: { code: status, message } });
   }
 }
