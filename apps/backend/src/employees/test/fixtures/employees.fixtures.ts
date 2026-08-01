@@ -12,7 +12,7 @@ export const createEmployeeDtoFixture: CreateEmployeeDto = {
 };
 
 export const employeeEntityFixture: Employee = {
-  id: 3310,
+  id: '9f1c2d3e-4b5a-4c6d-8e7f-123456789abc',
   name: 'Ravi Kumar',
   email: 'r.kumar@acme.corp',
   department: 'Engineering',
@@ -27,7 +27,7 @@ export const employeeEntityFixture: Employee = {
 };
 
 export const employeeResponseFixture: EmployeeResponseDto = {
-  id: 3310,
+  id: '9f1c2d3e-4b5a-4c6d-8e7f-123456789abc',
   name: 'Ravi Kumar',
   email: 'r.kumar@acme.corp',
   department: 'Engineering',

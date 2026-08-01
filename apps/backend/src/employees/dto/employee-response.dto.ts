@@ -1,5 +1,5 @@
 export class EmployeeResponseDto {
-  id: number;
+  id: string;
   name: string;
   email: string;
   department: string;
