@@ -1,0 +1,123 @@
+:root {
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-container: #f0fdfa;
+  --on-primary: #ffffff;
+  --surface: #f8f9ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #eff4ff;
+  --surface-container: #e5eeff;
+  --surface-container-highest: #d3e4fe;
+  --surface-variant: #d3e4fe;
+  --surface-dim: #cbdbf5;
+  --on-surface: #0b1c30;
+  --on-surface-variant: #3d4947;
+  --secondary: #565e74;
+  --outline: #6d7a77;
+  --outline-variant: #e5e7eb;
+  --background: #f8f9ff;
+  --on-background: #0b1c30;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --primary-fixed-dim: #6bd8cb;
+  --tertiary: #595c5e;
+  --tertiary-container: #727577;
+  --tertiary-fixed: #e0e3e5;
+  --on-tertiary-fixed: #191c1e;
+  --secondary-container: #dae2fd;
+  --inverse-surface: #213145;
+  --inverse-on-surface: #eaf1ff;
+
+  --rose-50: #fff1f2;
+  --rose-500: #f43f5e;
+  --rose-600: #e11d48;
+  --amber-50: #fffbeb;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+  --amber-800: #92400e;
+  --amber-100: #fef3c7;
+  --teal-50: #f0fdfa;
+  --teal-500: #14b8a6;
+  --teal-600: #0d9488;
+  --teal-700: #0f766e;
+  --teal-200: #99f6e4;
+  --emerald-100: #d1fae5;
+  --emerald-800: #065f46;
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --sidebar-width: 260px;
+  --topbar-height: 64px;
+  --container-max-width: 1280px;
+  --gutter: 24px;
+  --margin-desktop: 32px;
+  --stack-sm: 8px;
+  --stack-md: 16px;
+  --stack-lg: 24px;
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  --shadow-popover: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+
+  font-family: var(--font-sans);
+  color: var(--on-surface);
+  background: var(--background);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font: 14px/20px var(--font-sans);
+  color: var(--on-surface);
+  background: var(--background);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+  user-select: none;
+}
