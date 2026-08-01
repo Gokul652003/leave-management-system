@@ -11,6 +11,10 @@
     "dev:backend": "npm run start:dev --workspace @lms/backend",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "db:start": "npm run db:start --workspace @lms/backend",
+    "db:stop": "npm run db:stop --workspace @lms/backend",
+    "db:status": "npm run db:status --workspace @lms/backend",
+    "db:reset": "npm run db:reset --workspace @lms/backend"
   }
 }
