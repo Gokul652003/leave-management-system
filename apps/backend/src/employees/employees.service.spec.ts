@@ -1,0 +1,64 @@
+import { UnprocessableEntityException } from '@nestjs/common';
+import { EmployeesServiceImpl } from './employees.service';
+import { Employee } from './entities/employee.entity';
+import {
+  createEmployeesRepositoryMock,
+  createEmployeesServiceModule,
+  type EmployeesRepositoryMock,
+} from './test/module-fixtures';
+import {
+  createEmployeeDtoFixture,
+  employeeEntityFixture,
+  employeeResponseFixture,
+} from './test/fixtures/employees.fixtures';
+
+describe('EmployeesService', () => {
+  let service: EmployeesServiceImpl;
+  const employeesRepository: EmployeesRepositoryMock =
+    createEmployeesRepositoryMock();
+
+  beforeEach(async () => {
+    const module = await createEmployeesServiceModule(employeesRepository);
+    service = module.get<EmployeesServiceImpl>(EmployeesServiceImpl);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('should throw UnprocessableEntityException when email already exists', async () => {
+      employeesRepository.findByEmail.mockResolvedValue(employeeEntityFixture);
+
+      await expect(
+        service.create(createEmployeeDtoFixture),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+      expect(employeesRepository.findByEmail).toHaveBeenCalledWith(
+        createEmployeeDtoFixture.email,
+      );
+    });
+
+    it('should create employee with EMP-xxxx-AC employeeId and return response dto', async () => {
+      employeesRepository.findByEmail.mockResolvedValue(null);
+      employeesRepository.create.mockImplementation(
+        (data: Partial<Employee>) => data,
+      );
+      employeesRepository.save
+        .mockResolvedValueOnce(employeeEntityFixture)
+        .mockResolvedValueOnce(employeeEntityFixture);
+
+      const result = await service.create(createEmployeeDtoFixture);
+
+      expect(result).toEqual(employeeResponseFixture);
+      expect(employeesRepository.create).toHaveBeenCalledWith({
+        name: 'Ravi Kumar',
+        email: 'r.kumar@acme.corp',
+        department: 'Engineering',
+        role: 'Backend Engineer',
+        managerId: 2940,
+        joinDate: '2024-02-01',
+        status: 'Active',
+      });
+    });
+  });
+});
