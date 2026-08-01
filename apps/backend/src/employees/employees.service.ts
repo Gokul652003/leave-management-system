@@ -3,6 +3,7 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
+import { randomInt } from 'node:crypto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeResponseDto } from './dto/employee-response.dto';
 import { Employee } from './entities/employee.entity';
@@ -24,6 +25,8 @@ export class EmployeesServiceImpl implements IEmployeesService {
       throw new UnprocessableEntityException('Email already exists');
     }
 
+    const employeeId = `EMP-${String(randomInt(0, 10000)).padStart(4, '0')}-AC`;
+
     const employee = this.employeesRepository.create({
       name: dto.name,
       email: dto.email,
@@ -31,12 +34,11 @@ export class EmployeesServiceImpl implements IEmployeesService {
       role: dto.role,
       managerId: dto.managerId ?? null,
       joinDate: dto.joinDate ?? null,
+      employeeId,
       status: 'Active',
     });
 
     const saved = await this.employeesRepository.save(employee);
-    saved.employeeId = `EMP-${String(saved.id).padStart(4, '0')}-AC`;
-    await this.employeesRepository.save(saved);
 
     return this.toResponse(saved);
   }

@@ -43,9 +43,7 @@ describe('EmployeesService', () => {
       employeesRepository.create.mockImplementation(
         (data: Partial<Employee>) => data,
       );
-      employeesRepository.save
-        .mockResolvedValueOnce(employeeEntityFixture)
-        .mockResolvedValueOnce(employeeEntityFixture);
+      employeesRepository.save.mockResolvedValueOnce(employeeEntityFixture);
 
       const result = await service.create(createEmployeeDtoFixture);
 
@@ -57,8 +55,10 @@ describe('EmployeesService', () => {
         role: 'Backend Engineer',
         managerId: 2940,
         joinDate: '2024-02-01',
+        employeeId: expect.stringMatching(/^EMP-\d{4}-AC$/),
         status: 'Active',
       });
+      expect(employeesRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 });
