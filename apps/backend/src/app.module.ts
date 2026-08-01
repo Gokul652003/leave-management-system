@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AppController } from './app.controller';
 import { validate } from './config/env.validation';
 import { createTypeOrmOptions } from './config/typeorm.config';
+import { EmployeesModule } from './employees/employees.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { createTypeOrmOptions } from './config/typeorm.config';
         secret: config.get<string>('SUPABASE_JWT_SECRET'),
       }),
     }),
+    EmployeesModule,
   ],
   controllers: [AppController],
 })
