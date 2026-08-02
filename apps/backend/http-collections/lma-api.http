@@ -2,7 +2,23 @@
 # Environments are defined in .vscode/settings.json -> rest-client.environmentVariables
 # Select environment at the bottom-right status bar (or Ctrl+Alt+E)
 # baseUrl = shared across environments
+# supabaseUrl / supabaseAnonKey = set per environment (Supabase Auth)
 # jwtToken = set per environment (admin/hr Supabase JWT)
+#
+# Run the Login request first: it captures the JWT via response chaining,
+# and every protected request below uses {{login.response.body.access_token}}.
+# Alternatively, paste a token into jwtToken and switch those requests to use it.
+
+### POST /auth/v1/token - Login (Supabase Auth) - returns access_token
+# @name login
+POST {{supabaseUrl}}/auth/v1/token?grant_type=password
+apikey: {{supabaseAnonKey}}
+Content-Type: application/json
+
+{
+  "email": "admin@acme.corp",
+  "password": "Password123!"
+}
 
 ### GET /health - Health check
 GET {{baseUrl}}/health
@@ -10,7 +26,7 @@ Accept: application/json
 
 ### POST /employees - Create employee (requires role: admin or hr)
 POST {{baseUrl}}/employees
-Authorization: Bearer {{jwtToken}}
+Authorization: Bearer {{login.response.body.access_token}}
 Content-Type: application/json
 
 {
@@ -24,5 +40,5 @@ Content-Type: application/json
 
 ### GET /leaves/types - List available leave types (requires role: employee)
 GET {{baseUrl}}/leaves/types
-Authorization: Bearer {{jwtToken}}
+Authorization: Bearer {{login.response.body.access_token}}
 Accept: application/json
