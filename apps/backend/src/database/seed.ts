@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { Employee } from '../employees/entities/employee.entity';
+import { LeaveType } from '../leaves/entities/leave-type.entity';
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -11,7 +12,7 @@ const dataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  entities: [Employee],
+  entities: [Employee, LeaveType],
   synchronize: false,
 });
 
@@ -38,6 +39,14 @@ const employees: Partial<Employee>[] = [
   },
 ];
 
+const leaveTypes: Partial<LeaveType>[] = [
+  { code: 'annual', name: 'Annual Leave', maxDaysPerRequest: 30 },
+  { code: 'sick', name: 'Sick Leave', maxDaysPerRequest: 15, requiresDocumentationOverDays: 3 },
+  { code: 'unpaid', name: 'Unpaid Leave' },
+  { code: 'bereavement', name: 'Bereavement' },
+  { code: 'maternity', name: 'Maternity/Paternity', maxDaysPerRequest: 120 },
+];
+
 async function seed() {
   await dataSource.initialize();
   try {
@@ -52,6 +61,18 @@ async function seed() {
       const employee = dataSource.getRepository(Employee).create(data);
       await dataSource.getRepository(Employee).save(employee);
       console.log(`Seeded ${data.email}`);
+    }
+    for (const data of leaveTypes) {
+      const existing = await dataSource
+        .getRepository(LeaveType)
+        .findOneBy({ code: data.code });
+      if (existing) {
+        console.log(`Skipping ${data.code}, already exists`);
+        continue;
+      }
+      const leaveType = dataSource.getRepository(LeaveType).create(data);
+      await dataSource.getRepository(LeaveType).save(leaveType);
+      console.log(`Seeded leave type ${data.code}`);
     }
   } finally {
     await dataSource.destroy();

@@ -13,7 +13,7 @@ export function createTypeOrmOptions(
     database: config.get<string>('DB_NAME'),
     ssl: config.get<boolean>('DB_SSL') ? { rejectUnauthorized: false } : false,
     autoLoadEntities: true,
-    synchronize: config.get<string>('NODE_ENV') !== 'production',
+    synchronize: false,
     logging: config.get<string>('NODE_ENV') === 'development',
   };
 }
