@@ -15,6 +15,11 @@
     "db:start": "npm run db:start --workspace @lms/backend",
     "db:stop": "npm run db:stop --workspace @lms/backend",
     "db:status": "npm run db:status --workspace @lms/backend",
-    "db:reset": "npm run db:reset --workspace @lms/backend"
+    "db:reset": "npm run db:reset --workspace @lms/backend",
+    "db:migration:new": "npm run db:migration:new --workspace @lms/backend",
+    "db:migration:list": "npm run db:migration:list --workspace @lms/backend",
+    "db:migration:up": "npm run db:migration:up --workspace @lms/backend",
+    "db:push": "npm run db:push --workspace @lms/backend",
+    "db:seed": "npm run db:seed --workspace @lms/backend"
   }
 }

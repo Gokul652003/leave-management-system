@@ -21,3 +21,8 @@ Content-Type: application/json
   "managerId": 2940,
   "joinDate": "2024-02-01"
 }
+
+### GET /leaves/types - List available leave types (requires role: employee)
+GET {{baseUrl}}/leaves/types
+Authorization: Bearer {{jwtToken}}
+Accept: application/json

@@ -21,7 +21,12 @@
     "db:start": "npx supabase start",
     "db:stop": "npx supabase stop",
     "db:status": "npx supabase status",
-    "db:reset": "npx supabase db reset"
+    "db:reset": "npx supabase db reset",
+    "db:migration:new": "npx supabase migration new",
+    "db:migration:list": "npx supabase migration list",
+    "db:migration:up": "npx supabase migration up",
+    "db:push": "npx supabase db push",
+    "db:seed": "ts-node src/database/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
