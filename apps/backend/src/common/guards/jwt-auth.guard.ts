@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Algorithm } from 'jsonwebtoken';
 import { Request } from 'express';
 
 export interface SupabaseClaims {
@@ -42,9 +43,20 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync<SupabaseClaims>(token, {
-        secret: this.config.get<string>('SUPABASE_JWT_SECRET'),
-      });
+      const jwtSecret = this.config.get<string>('SUPABASE_JWT_SECRET');
+      const jwtPublicKey = this.config.get<string>('SUPABASE_JWT_PUBLIC_KEY');
+
+      const verifyOptions = jwtPublicKey
+        ? {
+            secret: jwtPublicKey.replace(/\\n/g, '\n'),
+            algorithms: ['ES256'] as Algorithm[],
+          }
+        : { secret: jwtSecret };
+
+      const payload = await this.jwtService.verifyAsync<SupabaseClaims>(
+        token,
+        verifyOptions,
+      );
 
       const role =
         payload.app_metadata?.role ?? payload.user_metadata?.role ?? 'employee';
