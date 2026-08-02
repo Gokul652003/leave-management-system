@@ -1,6 +1,6 @@
 create schema if not exists employees;
 
-create table employees.employees (
+create table if not exists employees.employees (
   id uuid not null default gen_random_uuid(),
   name varchar(120) not null,
   email varchar(255) not null,
