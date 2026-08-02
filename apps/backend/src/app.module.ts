@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { validate } from './config/env.validation';
 import { createTypeOrmOptions } from './config/typeorm.config';
 import { EmployeesModule } from './employees/employees.module';
+import { LeavesModule } from './leaves/leaves.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EmployeesModule } from './employees/employees.module';
       }),
     }),
     EmployeesModule,
+    LeavesModule,
   ],
   controllers: [AppController],
 })
