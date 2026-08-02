@@ -11,3 +11,11 @@ export class EmployeeResponseDto {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export class MeResponseDto {
+  name: string;
+  email: string;
+  department: string
+  role: string;
+  employeeId: string;
+}
