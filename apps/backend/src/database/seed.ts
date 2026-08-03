@@ -61,12 +61,14 @@ const authUsers: AuthUserSeed[] = [
 const authBaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-async function seedAuthUsers() {
+async function seedAuthUsers(): Promise<Map<string, string>> {
   if (!authBaseUrl || !serviceRoleKey) {
     throw new Error(
       'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to seed auth users',
     );
   }
+
+  const userIdByEmail = new Map<string, string>();
 
   for (const data of authUsers) {
     const response = await fetch(`${authBaseUrl}/auth/v1/admin/users`, {
@@ -86,8 +88,26 @@ async function seedAuthUsers() {
     });
 
     if (response.ok) {
+      const body = (await response.json()) as { id: string };
+      userIdByEmail.set(data.email, body.id);
       console.log(`Seeded auth user ${data.email} (role: ${data.role})`);
     } else if (response.status === 422) {
+      const existing = await fetch(
+        `${authBaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(data.email)}`,
+        {
+          headers: {
+            apikey: serviceRoleKey,
+            Authorization: `Bearer ${serviceRoleKey}`,
+          },
+        },
+      );
+      const existingBody = (await existing.json()) as {
+        users?: { id: string }[];
+      };
+      const user = existingBody.users?.[0];
+      if (user) {
+        userIdByEmail.set(data.email, user.id);
+      }
       console.log(`Skipping auth user ${data.email}, already exists`);
     } else {
       const body = await response.text();
@@ -96,6 +116,8 @@ async function seedAuthUsers() {
       );
     }
   }
+
+  return userIdByEmail;
 }
 
 const employees: Partial<Employee>[] = [
@@ -137,6 +159,8 @@ const leaveTypes: Partial<LeaveType>[] = [
 async function seed() {
   await dataSource.initialize();
   try {
+    const userIdByEmail = await seedAuthUsers();
+
     for (const data of employees) {
       const existing = await dataSource
         .getRepository(Employee)
@@ -145,8 +169,13 @@ async function seed() {
         console.log(`Skipping ${data.email}, already exists`);
         continue;
       }
+      const userId = userIdByEmail.get(data.email ?? '');
       const employee = dataSource.getRepository(Employee).create(data);
-      await dataSource.getRepository(Employee).save(employee);
+      const saved = await dataSource.getRepository(Employee).save(employee);
+      await dataSource.query(
+        'update employees.employees set user_id = $1 where id = $2',
+        [userId ?? null, saved.id],
+      );
       console.log(`Seeded ${data.email}`);
     }
     for (const data of leaveTypes) {
@@ -161,7 +190,6 @@ async function seed() {
       await dataSource.getRepository(LeaveType).save(leaveType);
       console.log(`Seeded leave type ${data.code}`);
     }
-    await seedAuthUsers();
   } finally {
     await dataSource.destroy();
   }
