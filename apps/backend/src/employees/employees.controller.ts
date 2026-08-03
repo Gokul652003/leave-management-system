@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { AuthUser, JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '../common/interfaces/api-response.interface';
@@ -7,6 +7,7 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeResponseDto, MeResponseDto } from './dto/employee-response.dto';
 import type { IEmployeesService } from './interfaces/employees-service.interface';
 import { EMPLOYEES_SERVICE } from './tokens';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @Controller('employees')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,8 +36,9 @@ export class MeController {
   ){}
   
   @Get()
-  async getMe(@Body('employeeId') employeeId: string): Promise<ApiResponse<MeResponseDto>> {
-    const employee = await this.employeesService.findById(employeeId);
+  async getMe(@CurrentUser() user): Promise<ApiResponse<MeResponseDto>> {
+    const { id } = user;
+    const employee = await this.employeesService.findById(id);
     return { data: employee };
   }
 }
