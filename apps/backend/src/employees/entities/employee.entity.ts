@@ -32,4 +32,7 @@ export class Employee extends BaseEntity {
 
   @Column({ type: 'varchar', length: 32, default: 'Active' })
   status: string;
+
+  @Column({ type: 'uuid', name: 'user_id', unique: true, nullable: true })
+  userId?: string | null;
 }
