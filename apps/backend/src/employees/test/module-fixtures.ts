@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { EmployeesController } from '../employees.controller';
+import { EmployeesController, MeController } from '../employees.controller';
 import { EmployeesServiceImpl } from '../employees.service';
 import { Employee } from '../entities/employee.entity';
 import { TypeOrmEmployeesRepository } from '../repositories/employees.repository';
@@ -11,26 +11,33 @@ import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from '../tokens';
 
 export interface EmployeesServiceMock {
   create: jest.Mock;
+  findById: jest.Mock;
 }
 
 export interface EmployeesRepositoryMock {
+  findById: jest.Mock;
   findByEmail: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
 }
 
 export interface TypeOrmRepositoryMock {
+  findById: jest.Mock;
   findOne: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
 }
 
 export function createEmployeesServiceMock(): EmployeesServiceMock {
-  return { create: jest.fn() };
+  return {
+    create: jest.fn(),
+    findById: jest.fn(),
+  };
 }
 
 export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
   return {
+    findById: jest.fn(),
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -39,6 +46,7 @@ export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
 
 export function createTypeOrmRepositoryMock(): TypeOrmRepositoryMock {
   return {
+    findById: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -49,7 +57,7 @@ export async function createEmployeesControllerModule(
   employeesService: EmployeesServiceMock,
 ): Promise<TestingModule> {
   return Test.createTestingModule({
-    controllers: [EmployeesController],
+    controllers: [EmployeesController, MeController],
     providers: [
       Reflector,
       { provide: ConfigService, useValue: { get: jest.fn() } },

@@ -4,7 +4,7 @@ import {
   createTypeOrmRepositoryMock,
   type TypeOrmRepositoryMock,
 } from '../test/module-fixtures';
-import { employeeEntityFixture } from '../test/fixtures/employees.fixtures';
+import { employeeEntityFixture, userIdDtoFixture } from '../test/fixtures/employees.fixtures';
 
 describe('TypeOrmEmployeesRepository', () => {
   let repository: TypeOrmEmployeesRepository;
@@ -56,4 +56,16 @@ describe('TypeOrmEmployeesRepository', () => {
       expect(result).toEqual(employeeEntityFixture);
     });
   });
+
+  describe('findById', () => {
+    it('should delegate to typeorm findById', () => {
+      typeOrmRepo.findById.mockReturnValue(employeeEntityFixture);
+
+      const result = repository.findById(userIdDtoFixture.id);
+
+      expect(typeOrmRepo.findById).toHaveBeenCalledWith(userIdDtoFixture);
+      expect(result).toEqual(employeeEntityFixture);
+    });
+  });
+
 });

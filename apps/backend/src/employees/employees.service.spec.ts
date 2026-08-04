@@ -1,4 +1,4 @@
-import { UnprocessableEntityException } from '@nestjs/common';
+import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { EmployeesServiceImpl } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import {
@@ -10,6 +10,7 @@ import {
   createEmployeeDtoFixture,
   employeeEntityFixture,
   employeeResponseFixture,
+  userIdDtoFixture,
 } from './test/fixtures/employees.fixtures';
 
 describe('EmployeesService', () => {
@@ -59,6 +60,27 @@ describe('EmployeesService', () => {
         status: 'Active',
       });
       expect(employeesRepository.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findById', () => {
+    it('should throw NotFoundException when user with id not found', async () => {
+      employeesRepository.findByEmail.mockResolvedValue(employeeEntityFixture);
+
+      await expect(
+        service.findById(userIdDtoFixture.id),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('should find employee with id and return response dto', async () => {
+      employeesRepository.findById.mockImplementation(
+        (data: Partial<Employee>) => data,
+      );
+
+      const result = await service.findById(userIdDtoFixture.id);
+
+      expect(result).toEqual(employeeResponseFixture);
+      expect(employeesRepository.findById).toHaveBeenCalledWith("6713c410-5bcb-42ac-a0be-628f6e924420");
     });
   });
 });

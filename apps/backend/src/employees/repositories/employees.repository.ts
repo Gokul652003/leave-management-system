@@ -12,7 +12,7 @@ export class TypeOrmEmployeesRepository implements IEmployeesRepository {
   ) {}
 
   findById(id: string ): Promise<Employee | null> {
-    return this.repository.findOneBy({ id });
+    return this.repository.findOneBy({ userId:id });
   }
 
   findByEmail(email: string): Promise<Employee | null> {
