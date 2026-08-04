@@ -16,7 +16,6 @@ apikey: {{supabaseAnonKey}}
 Content-Type: application/json
 
 {
-  "email": "admin@acme.corp",
   "password": "Password123!"
 }
 
@@ -37,6 +36,11 @@ Content-Type: application/json
   "managerId": 2940,
   "joinDate": "2024-02-01"
 }
+
+### GET /auth/me - Get current user info 
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{login.response.body.access_token}}
+Accept: application/json
 
 ### GET /leaves/types - List available leave types (requires role: employee)
 GET {{baseUrl}}/leaves/types
