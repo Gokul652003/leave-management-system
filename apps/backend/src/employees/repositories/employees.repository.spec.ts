@@ -59,11 +59,11 @@ describe('TypeOrmEmployeesRepository', () => {
 
   describe('findById', () => {
     it('should delegate to typeorm findById', () => {
-      typeOrmRepo.findById.mockReturnValue(employeeEntityFixture);
+      typeOrmRepo.findOneBy.mockReturnValue(employeeEntityFixture);
 
       const result = repository.findById(userIdDtoFixture.id);
 
-      expect(typeOrmRepo.findById).toHaveBeenCalledWith(userIdDtoFixture);
+      expect(typeOrmRepo.findOneBy).toHaveBeenCalledWith({userId:userIdDtoFixture.id});
       expect(result).toEqual(employeeEntityFixture);
     });
   });

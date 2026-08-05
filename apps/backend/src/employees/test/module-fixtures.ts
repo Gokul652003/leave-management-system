@@ -22,7 +22,7 @@ export interface EmployeesRepositoryMock {
 }
 
 export interface TypeOrmRepositoryMock {
-  findById: jest.Mock;
+  findOneBy: jest.Mock;
   findOne: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
@@ -46,7 +46,7 @@ export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
 
 export function createTypeOrmRepositoryMock(): TypeOrmRepositoryMock {
   return {
-    findById: jest.fn(),
+    findOneBy: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),

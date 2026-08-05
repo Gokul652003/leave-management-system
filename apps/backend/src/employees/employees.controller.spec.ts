@@ -56,8 +56,11 @@ describe('MeController',()=>{
       employeesService.findById.mockResolvedValue(meResponseFixture);
 
       const result = await controller.getMe(userIdDtoFixture);
-
-      expect(result).toEqual(meResponseFixture);
+      expect(employeesService.findById).toHaveBeenCalledWith(
+        userIdDtoFixture.id
+      );
+      
+      expect(result).toEqual({ data: meResponseFixture });
     });
   });
 })

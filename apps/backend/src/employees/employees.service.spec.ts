@@ -10,8 +10,10 @@ import {
   createEmployeeDtoFixture,
   employeeEntityFixture,
   employeeResponseFixture,
+  meResponseFixture,
   userIdDtoFixture,
 } from './test/fixtures/employees.fixtures';
+import { MeResponseDto } from './dto/employee-response.dto';
 
 describe('EmployeesService', () => {
   let service: EmployeesServiceImpl;
@@ -73,14 +75,15 @@ describe('EmployeesService', () => {
     });
 
     it('should find employee with id and return response dto', async () => {
-      employeesRepository.findById.mockImplementation(
-        (data: Partial<Employee>) => data,
+      employeesRepository.findById.mockResolvedValue(
+        employeeEntityFixture
       );
-
+      
       const result = await service.findById(userIdDtoFixture.id);
-
-      expect(result).toEqual(employeeResponseFixture);
-      expect(employeesRepository.findById).toHaveBeenCalledWith("6713c410-5bcb-42ac-a0be-628f6e924420");
+      expect(result).toEqual(meResponseFixture);
+      expect(employeesRepository.findById).toHaveBeenCalledWith(
+        userIdDtoFixture.id,
+      );
     });
   });
 });
