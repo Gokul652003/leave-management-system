@@ -1,11 +1,12 @@
 import {
   Inject,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { EmployeeResponseDto } from './dto/employee-response.dto';
+import { EmployeeResponseDto, MeResponseDto } from './dto/employee-response.dto';
 import { Employee } from './entities/employee.entity';
 import type { IEmployeesRepository } from './interfaces/employees-repository.interface';
 import type { IEmployeesService } from './interfaces/employees-service.interface';
@@ -56,6 +57,25 @@ export class EmployeesServiceImpl implements IEmployeesService {
       status: employee.status,
       createdAt: employee.createdAt,
       updatedAt: employee.updatedAt,
-    };
+    }; 
+  }
+
+  async findByUserId(id: string): Promise<MeResponseDto> {
+    const employee = await this.employeesRepository.findByUserId(id);
+
+    if (!employee) {
+      throw new NotFoundException('Employee profile not found');
+    }
+    return this.toMeResponse(employee);
+  }
+
+  private toMeResponse(employee: Employee): MeResponseDto {
+    return {
+      name: employee.name,
+      email: employee.email,
+      department: employee.department,
+      role: employee.role,
+      employeeId: employee.employeeId,
+    }
   }
 }

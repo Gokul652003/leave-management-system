@@ -1,4 +1,4 @@
-import { EmployeesController } from './employees.controller';
+import { EmployeesController, MeController } from './employees.controller';
 import {
   createEmployeesControllerModule,
   createEmployeesServiceMock,
@@ -7,6 +7,8 @@ import {
 import {
   createEmployeeDtoFixture,
   employeeResponseFixture,
+  meResponseFixture,
+  userIdDtoFixture,
 } from './test/fixtures/employees.fixtures';
 
 describe('EmployeesController', () => {
@@ -35,3 +37,30 @@ describe('EmployeesController', () => {
     });
   });
 });
+
+describe('MeController',()=>{
+  let controller: MeController;
+  const employeesService: EmployeesServiceMock = createEmployeesServiceMock();
+
+  beforeEach(async () => {
+    const module = await createEmployeesControllerModule(employeesService);
+    controller = module.get<MeController>(MeController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('findById', () => {
+    it('should call the service and wrap the result in ApiResponse data', async () => {
+      employeesService.findByUserId.mockResolvedValue(meResponseFixture);
+
+      const result = await controller.getMe(userIdDtoFixture);
+      expect(employeesService.findByUserId).toHaveBeenCalledWith(
+        userIdDtoFixture.id
+      );
+      
+      expect(result).toEqual({ data: meResponseFixture });
+    });
+  });
+})
