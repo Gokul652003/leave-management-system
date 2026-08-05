@@ -11,11 +11,11 @@ import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from '../tokens';
 
 export interface EmployeesServiceMock {
   create: jest.Mock;
-  findById: jest.Mock;
+  findByUserId: jest.Mock;
 }
 
 export interface EmployeesRepositoryMock {
-  findById: jest.Mock;
+  findByUserId: jest.Mock;
   findByEmail: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
@@ -31,13 +31,13 @@ export interface TypeOrmRepositoryMock {
 export function createEmployeesServiceMock(): EmployeesServiceMock {
   return {
     create: jest.fn(),
-    findById: jest.fn(),
+    findByUserId: jest.fn(),
   };
 }
 
 export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
   return {
-    findById: jest.fn(),
+    findByUserId: jest.fn(),
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),

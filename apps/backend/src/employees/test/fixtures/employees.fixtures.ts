@@ -40,11 +40,11 @@ export const employeeResponseFixture: EmployeeResponseDto = {
   updatedAt: new Date('2024-02-01T10:00:00Z'),
 };
 
-export const signinCredDto = {
-  email:'r.kumar@acme.com',
-  password:'Password123!'
-}
-export const userIdDtoFixture = { id: "6713c410-5bcb-42ac-a0be-628f6e924420" };
+export const userIdDtoFixture = {
+   id: "6713c410-5bcb-42ac-a0be-628f6e924420" ,
+   email: 'r.kumar@acme.corp',
+   role: 'Backend Engineer',
+  };
 
 export const meResponseFixture: MeResponseDto = {
   name: 'Ravi Kumar',

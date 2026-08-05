@@ -63,7 +63,7 @@ describe('TypeOrmEmployeesRepository', () => {
 
       const result = repository.findById(userIdDtoFixture.id);
 
-      expect(typeOrmRepo.findOneBy).toHaveBeenCalledWith({userId:userIdDtoFixture.id});
+      expect(typeOrmRepo.findOneBy).toHaveBeenCalledWith({ userId: userIdDtoFixture.id });
       expect(result).toEqual(employeeEntityFixture);
     });
   });

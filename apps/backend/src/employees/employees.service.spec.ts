@@ -67,21 +67,21 @@ describe('EmployeesService', () => {
 
   describe('findById', () => {
     it('should throw NotFoundException when user with id not found', async () => {
-      employeesRepository.findByEmail.mockResolvedValue(employeeEntityFixture);
+      employeesRepository.findByUserId.mockResolvedValue(null);
 
       await expect(
-        service.findById(userIdDtoFixture.id),
+        service.findByUserId(userIdDtoFixture.id),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('should find employee with id and return response dto', async () => {
-      employeesRepository.findById.mockResolvedValue(
+      employeesRepository.findByUserId.mockResolvedValue(
         employeeEntityFixture
       );
       
-      const result = await service.findById(userIdDtoFixture.id);
+      const result = await service.findByUserId(userIdDtoFixture.id);
       expect(result).toEqual(meResponseFixture);
-      expect(employeesRepository.findById).toHaveBeenCalledWith(
+      expect(employeesRepository.findByUserId).toHaveBeenCalledWith(
         userIdDtoFixture.id,
       );
     });

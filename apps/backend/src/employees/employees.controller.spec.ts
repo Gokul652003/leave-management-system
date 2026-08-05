@@ -53,10 +53,10 @@ describe('MeController',()=>{
 
   describe('findById', () => {
     it('should call the service and wrap the result in ApiResponse data', async () => {
-      employeesService.findById.mockResolvedValue(meResponseFixture);
+      employeesService.findByUserId.mockResolvedValue(meResponseFixture);
 
       const result = await controller.getMe(userIdDtoFixture);
-      expect(employeesService.findById).toHaveBeenCalledWith(
+      expect(employeesService.findByUserId).toHaveBeenCalledWith(
         userIdDtoFixture.id
       );
       

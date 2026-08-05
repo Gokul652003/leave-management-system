@@ -16,6 +16,7 @@ apikey: {{supabaseAnonKey}}
 Content-Type: application/json
 
 {
+  "email": "admin@acme.corp",
   "password": "Password123!"
 }
 

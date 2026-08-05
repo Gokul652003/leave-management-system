@@ -60,8 +60,8 @@ export class EmployeesServiceImpl implements IEmployeesService {
     }; 
   }
 
-  async findById(id: string): Promise<MeResponseDto> {
-    const employee = await this.employeesRepository.findById(id);
+  async findByUserId(id: string): Promise<MeResponseDto> {
+    const employee = await this.employeesRepository.findByUserId(id);
 
     if (!employee) {
       throw new NotFoundException('Employee profile not found');

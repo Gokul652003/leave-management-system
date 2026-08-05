@@ -3,5 +3,5 @@ import { EmployeeResponseDto, MeResponseDto } from '../dto/employee-response.dto
 
 export interface IEmployeesService {
   create(dto: CreateEmployeeDto): Promise<EmployeeResponseDto>;
-  findById(id: string): Promise<MeResponseDto>;
+  findByUserId(id: string): Promise<MeResponseDto>;
 }
