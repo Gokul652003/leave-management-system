@@ -22,8 +22,7 @@ export class LeavesServiceImpl implements ILeavesService {
       id: type.code,
       name: type.name,
       maxDaysPerRequest: type.maxDaysPerRequest ?? null,
-      requiresDocumentationOverDays:
-        type.requiresDocumentationOverDays ?? null,
+      requiresDocumentationOverDays: type.requiresDocumentationOverDays ?? null,
     };
   }
 }
