@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { EmployeeResponseDto, MeResponseDto } from './dto/employee-response.dto';
+import {
+  EmployeeResponseDto,
+  MeResponseDto,
+} from './dto/employee-response.dto';
 import { Employee } from './entities/employee.entity';
 import type { IEmployeesRepository } from './interfaces/employees-repository.interface';
 import type { IEmployeesService } from './interfaces/employees-service.interface';
@@ -44,6 +47,17 @@ export class EmployeesServiceImpl implements IEmployeesService {
     return this.toResponse(saved);
   }
 
+  async getProfile(employeeId: string): Promise<EmployeeResponseDto> {
+    const employee =
+      await this.employeesRepository.findByEmployeeId(employeeId);
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    return this.toResponse(employee);
+  }
+
   private toResponse(employee: Employee): EmployeeResponseDto {
     return {
       id: employee.id,
@@ -57,7 +71,7 @@ export class EmployeesServiceImpl implements IEmployeesService {
       status: employee.status,
       createdAt: employee.createdAt,
       updatedAt: employee.updatedAt,
-    }; 
+    };
   }
 
   async findByUserId(id: string): Promise<MeResponseDto> {
@@ -76,6 +90,6 @@ export class EmployeesServiceImpl implements IEmployeesService {
       department: employee.department,
       role: employee.role,
       employeeId: employee.employeeId,
-    }
+    };
   }
 }
