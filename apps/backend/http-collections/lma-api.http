@@ -43,6 +43,11 @@ GET {{baseUrl}}/auth/me
 Authorization: Bearer {{login.response.body.access_token}}
 Accept: application/json
 
+### GET /employees/:employeeId/profile - Get employee profile (requires role: admin, hr or manager)
+GET {{baseUrl}}/employees/EMP-3311-AC/profile
+Authorization: Bearer {{login.response.body.access_token}}
+Accept: application/json
+
 ### GET /leaves/types - List available leave types (requires role: employee)
 GET {{baseUrl}}/leaves/types
 Authorization: Bearer {{login.response.body.access_token}}

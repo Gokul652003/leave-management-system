@@ -36,9 +36,24 @@ describe('EmployeesController', () => {
       expect(result).toEqual({ data: employeeResponseFixture });
     });
   });
+
+  describe('getProfile', () => {
+    it('should call the service and wrap the result in ApiResponse data', async () => {
+      employeesService.getProfile.mockResolvedValue(employeeResponseFixture);
+
+      const result = await controller.getProfile(
+        employeeResponseFixture.employeeId,
+      );
+
+      expect(employeesService.getProfile).toHaveBeenCalledWith(
+        employeeResponseFixture.employeeId,
+      );
+      expect(result).toEqual({ data: employeeResponseFixture });
+    });
+  });
 });
 
-describe('MeController',()=>{
+describe('MeController', () => {
   let controller: MeController;
   const employeesService: EmployeesServiceMock = createEmployeesServiceMock();
 
@@ -57,10 +72,10 @@ describe('MeController',()=>{
 
       const result = await controller.getMe(userIdDtoFixture);
       expect(employeesService.findByUserId).toHaveBeenCalledWith(
-        userIdDtoFixture.id
+        userIdDtoFixture.id,
       );
-      
+
       expect(result).toEqual({ data: meResponseFixture });
     });
   });
-})
+});

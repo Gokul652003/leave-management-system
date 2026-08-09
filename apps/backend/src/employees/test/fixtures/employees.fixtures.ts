@@ -1,5 +1,8 @@
 import { CreateEmployeeDto } from '../../dto/create-employee.dto';
-import { EmployeeResponseDto, MeResponseDto } from '../../dto/employee-response.dto';
+import {
+  EmployeeResponseDto,
+  MeResponseDto,
+} from '../../dto/employee-response.dto';
 import { Employee } from '../../entities/employee.entity';
 
 export const createEmployeeDtoFixture: CreateEmployeeDto = {
@@ -41,10 +44,10 @@ export const employeeResponseFixture: EmployeeResponseDto = {
 };
 
 export const userIdDtoFixture = {
-   id: "6713c410-5bcb-42ac-a0be-628f6e924420" ,
-   email: 'r.kumar@acme.corp',
-   role: 'Backend Engineer',
-  };
+  id: '6713c410-5bcb-42ac-a0be-628f6e924420',
+  email: 'r.kumar@acme.corp',
+  role: 'Backend Engineer',
+};
 
 export const meResponseFixture: MeResponseDto = {
   name: 'Ravi Kumar',

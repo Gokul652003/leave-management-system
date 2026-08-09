@@ -8,7 +8,7 @@ import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from './tokens';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Employee])],
-  controllers: [EmployeesController,MeController],
+  controllers: [EmployeesController, MeController],
   providers: [
     { provide: EMPLOYEES_REPOSITORY, useClass: TypeOrmEmployeesRepository },
     { provide: EMPLOYEES_SERVICE, useClass: EmployeesServiceImpl },

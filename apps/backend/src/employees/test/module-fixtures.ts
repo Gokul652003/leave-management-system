@@ -12,10 +12,12 @@ import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from '../tokens';
 export interface EmployeesServiceMock {
   create: jest.Mock;
   findByUserId: jest.Mock;
+  getProfile: jest.Mock;
 }
 
 export interface EmployeesRepositoryMock {
   findByUserId: jest.Mock;
+  findByEmployeeId: jest.Mock;
   findByEmail: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
@@ -32,12 +34,14 @@ export function createEmployeesServiceMock(): EmployeesServiceMock {
   return {
     create: jest.fn(),
     findByUserId: jest.fn(),
+    getProfile: jest.fn(),
   };
 }
 
 export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
   return {
     findByUserId: jest.fn(),
+    findByEmployeeId: jest.fn(),
     findByEmail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),

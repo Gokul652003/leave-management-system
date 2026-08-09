@@ -15,7 +15,7 @@ export class EmployeeResponseDto {
 export class MeResponseDto {
   name: string;
   email: string;
-  department: string
+  department: string;
   role: string;
   employeeId: string;
 }

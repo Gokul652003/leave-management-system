@@ -4,7 +4,10 @@ import {
   createTypeOrmRepositoryMock,
   type TypeOrmRepositoryMock,
 } from '../test/module-fixtures';
-import { employeeEntityFixture, userIdDtoFixture } from '../test/fixtures/employees.fixtures';
+import {
+  employeeEntityFixture,
+  userIdDtoFixture,
+} from '../test/fixtures/employees.fixtures';
 
 describe('TypeOrmEmployeesRepository', () => {
   let repository: TypeOrmEmployeesRepository;
@@ -19,6 +22,21 @@ describe('TypeOrmEmployeesRepository', () => {
 
   it('should be defined', () => {
     expect(repository).toBeDefined();
+  });
+
+  describe('findByEmployeeId', () => {
+    it('should delegate to typeorm findOne with employeeId filter', async () => {
+      typeOrmRepo.findOne.mockResolvedValue(employeeEntityFixture);
+
+      const result = await repository.findByEmployeeId(
+        employeeEntityFixture.employeeId,
+      );
+
+      expect(typeOrmRepo.findOne).toHaveBeenCalledWith({
+        where: { employeeId: employeeEntityFixture.employeeId },
+      });
+      expect(result).toEqual(employeeEntityFixture);
+    });
   });
 
   describe('findByEmail', () => {
@@ -57,15 +75,16 @@ describe('TypeOrmEmployeesRepository', () => {
     });
   });
 
-  describe('findById', () => {
-    it('should delegate to typeorm findById', () => {
+  describe('findByUserId', () => {
+    it('should delegate to typeorm findOneBy with userId filter', () => {
       typeOrmRepo.findOneBy.mockReturnValue(employeeEntityFixture);
 
-      const result = repository.findById(userIdDtoFixture.id);
+      const result = repository.findByUserId(userIdDtoFixture.id);
 
-      expect(typeOrmRepo.findOneBy).toHaveBeenCalledWith({ userId: userIdDtoFixture.id });
+      expect(typeOrmRepo.findOneBy).toHaveBeenCalledWith({
+        userId: userIdDtoFixture.id,
+      });
       expect(result).toEqual(employeeEntityFixture);
     });
   });
-
 });

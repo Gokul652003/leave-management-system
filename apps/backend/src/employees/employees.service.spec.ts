@@ -1,4 +1,7 @@
-import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { EmployeesServiceImpl } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import {
@@ -13,7 +16,6 @@ import {
   meResponseFixture,
   userIdDtoFixture,
 } from './test/fixtures/employees.fixtures';
-import { MeResponseDto } from './dto/employee-response.dto';
 
 describe('EmployeesService', () => {
   let service: EmployeesServiceImpl;
@@ -58,14 +60,14 @@ describe('EmployeesService', () => {
         role: 'Backend Engineer',
         managerId: 2940,
         joinDate: '2024-02-01',
-        employeeId: expect.stringMatching(/^EMP-\d{4}-AC$/),
+        employeeId: expect.stringMatching(/^EMP-\d{4}-AC$/) as string,
         status: 'Active',
       });
       expect(employeesRepository.save).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('findById', () => {
+  describe('findByUserId', () => {
     it('should throw NotFoundException when user with id not found', async () => {
       employeesRepository.findByUserId.mockResolvedValue(null);
 
@@ -75,14 +77,35 @@ describe('EmployeesService', () => {
     });
 
     it('should find employee with id and return response dto', async () => {
-      employeesRepository.findByUserId.mockResolvedValue(
-        employeeEntityFixture
-      );
-      
+      employeesRepository.findByUserId.mockResolvedValue(employeeEntityFixture);
+
       const result = await service.findByUserId(userIdDtoFixture.id);
       expect(result).toEqual(meResponseFixture);
       expect(employeesRepository.findByUserId).toHaveBeenCalledWith(
         userIdDtoFixture.id,
+      );
+    });
+  });
+
+  describe('getProfile', () => {
+    it('should throw NotFoundException when employee with employeeId not found', async () => {
+      employeesRepository.findByEmployeeId.mockResolvedValue(null);
+
+      await expect(
+        service.getProfile(employeeEntityFixture.employeeId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('should find employee by employeeId and return response dto', async () => {
+      employeesRepository.findByEmployeeId.mockResolvedValue(
+        employeeEntityFixture,
+      );
+
+      const result = await service.getProfile(employeeEntityFixture.employeeId);
+
+      expect(result).toEqual(employeeResponseFixture);
+      expect(employeesRepository.findByEmployeeId).toHaveBeenCalledWith(
+        employeeEntityFixture.employeeId,
       );
     });
   });
