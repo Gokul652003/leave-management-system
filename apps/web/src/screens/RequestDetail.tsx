@@ -1,48 +1,72 @@
 import { useState } from 'react'
-import alex from '../assets/alex-detail.jpg'
+import {
+  useApproveLeaveRequest,
+  useLeaveRequest,
+  useRejectLeaveRequest,
+} from '../api/hooks/useLeaveRequests'
+import { getErrorMessage } from '../api/errorMessage'
 
-type ActionState = 'idle' | 'approved' | 'rejected'
+function formatDate(value: string) {
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  })
+}
 
 function RequestDetail({
+  requestId,
   onBack,
   onApply,
 }: {
+  requestId: string
   onBack: () => void
   onApply: () => void
 }) {
+  const { data: request, isLoading, isError, error } = useLeaveRequest(requestId)
+  const approve = useApproveLeaveRequest()
+  const reject = useRejectLeaveRequest()
   const [comments, setComments] = useState('')
-  const [action, setAction] = useState<ActionState>('idle')
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
+  const [action, setAction] = useState<'idle' | 'approved' | 'rejected'>('idle')
 
-  const handleAction = (type: 'approve' | 'reject') => {
-    if (type === 'reject' && !comments.trim()) {
-      setError('Please provide a reason for rejection in the comments area.')
+  const handleApprove = () => {
+    setFormError('')
+    approve.mutate(requestId, {
+      onSuccess: () => {
+        setAction('approved')
+        setTimeout(onBack, 1500)
+      },
+    })
+  }
+
+  const handleReject = () => {
+    if (!comments.trim()) {
+      setFormError('Please provide a reason for rejection in the comments area.')
       return
     }
-    setError('')
-    setAction(type === 'approve' ? 'approved' : 'rejected')
-    setTimeout(() => setAction('idle'), 3000)
+    setFormError('')
+    reject.mutate(
+      { id: requestId, comments },
+      {
+        onSuccess: () => {
+          setAction('rejected')
+          setTimeout(onBack, 1500)
+        },
+      },
+    )
   }
 
   return (
     <>
       <header className="topbar">
         <div className="topbar-left">
-          <button
-            className="icon-button"
-            aria-label="Back"
-            onClick={onBack}
-          >
+          <button className="icon-button" aria-label="Back" onClick={onBack}>
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <h2 className="topbar-title">Request Detail #LR-8842</h2>
+          <h2 className="topbar-title">Request Detail</h2>
         </div>
         <div className="topbar-actions topbar-actions-wide">
-          <button className="icon-button notif-btn" aria-label="Notifications">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="notif-dot" />
-          </button>
-          <div className="topbar-divider" />
           <button className="btn-primary" onClick={onApply}>
             Apply for Leave
           </button>
@@ -50,165 +74,121 @@ function RequestDetail({
       </header>
       <main className="main">
         <div className="main-content detail-grid">
-          <div className="detail-left">
-            <section className="detail-main-card">
-              <div className="detail-person-row">
-                <img className="detail-person-avatar" src={alex} alt="Alex Thompson" />
-                <div>
-                  <h3>Alex Thompson</h3>
-                  <p className="detail-person-role">
-                    Senior Product Designer · Design Team
-                  </p>
-                  <div className="badge badge-pending detail-status-badge">
-                    <span className="badge-dot" />
-                    Pending Approval
-                  </div>
-                </div>
-                <div className="detail-submitted">
-                  <p className="detail-label-upper">Submitted On</p>
-                  <p className="detail-mono">Oct 24, 2023</p>
-                </div>
-              </div>
+          {isLoading && <p className="detail-label">Loading request...</p>}
+          {isError && (
+            <p className="detail-error">
+              {getErrorMessage(error)}
+            </p>
+          )}
 
-              <div className="detail-facts">
-                <div className="detail-fact">
-                  <p className="detail-label">Leave Type</p>
-                  <div className="detail-fact-row">
-                    <span className="material-symbols-outlined">beach_access</span>
-                    <p className="detail-fact-bold">Annual Leave</p>
+          {request && (
+            <>
+              <div className="detail-left">
+                <section className="detail-main-card">
+                  <div className="detail-person-row">
+                    <div>
+                      <h3>{request.employeeName}</h3>
+                      <p className="detail-person-role">{request.employeeCode}</p>
+                      <div className={`badge badge-${request.status} detail-status-badge`}>
+                        <span className="badge-dot" />
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </div>
+                    </div>
+                    <div className="detail-submitted">
+                      <p className="detail-label-upper">Submitted On</p>
+                      <p className="detail-mono">{formatDate(request.createdAt.slice(0, 10))}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="detail-fact">
-                  <p className="detail-label">Total Days</p>
-                  <p className="detail-fact-heading">
-                    5 <span className="detail-fact-unit">Workdays</span>
-                  </p>
-                </div>
-                <div className="detail-fact detail-fact-wide">
-                  <p className="detail-label">Duration</p>
-                  <p className="detail-fact-bold detail-fact-mono-row">
-                    <span className="detail-mono">Nov 12, 2023</span>
-                    <span className="material-symbols-outlined">arrow_forward</span>
-                    <span className="detail-mono">Nov 16, 2023</span>
-                  </p>
-                </div>
-              </div>
 
-              <div className="detail-reason">
-                <p className="detail-label">Reason for Request</p>
-                <p className="detail-reason-text">
-                  "Planning a family trip for my sister's wedding. I have
-                  completed the handover documentation for the Q4 design system
-                  update and briefed the team on the current status of the
-                  Figma libraries."
-                </p>
-              </div>
-            </section>
+                  <div className="detail-facts">
+                    <div className="detail-fact">
+                      <p className="detail-label">Leave Type</p>
+                      <div className="detail-fact-row">
+                        <span className="material-symbols-outlined">beach_access</span>
+                        <p className="detail-fact-bold">{request.leaveTypeName}</p>
+                      </div>
+                    </div>
+                    <div className="detail-fact">
+                      <p className="detail-label">Total Days</p>
+                      <p className="detail-fact-heading">
+                        {request.totalDays} <span className="detail-fact-unit">Days</span>
+                      </p>
+                    </div>
+                    <div className="detail-fact detail-fact-wide">
+                      <p className="detail-label">Duration</p>
+                      <p className="detail-fact-bold detail-fact-mono-row">
+                        <span className="detail-mono">{formatDate(request.startDate)}</span>
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                        <span className="detail-mono">{formatDate(request.endDate)}</span>
+                      </p>
+                    </div>
+                  </div>
 
-            <section className="detail-attachments">
-              <h4>
-                <span className="material-symbols-outlined">attach_file</span>
-                Attachments (2)
-              </h4>
-              <div className="attachment-list">
-                <div className="attachment-item">
-                  <div className="attachment-icon icon-pdf">
-                    <span className="material-symbols-outlined">picture_as_pdf</span>
-                  </div>
-                  <div className="attachment-info">
-                    <p className="attachment-name">Wedding_Invitation.pdf</p>
-                    <p className="attachment-size">2.4 MB</p>
-                  </div>
-                  <span className="material-symbols-outlined attachment-dl">
-                    download
-                  </span>
-                </div>
-                <div className="attachment-item">
-                  <div className="attachment-icon icon-doc">
-                    <span className="material-symbols-outlined">description</span>
-                  </div>
-                  <div className="attachment-info">
-                    <p className="attachment-name">Handover_Brief.docx</p>
-                    <p className="attachment-size">1.1 MB</p>
-                  </div>
-                  <span className="material-symbols-outlined attachment-dl">
-                    download
-                  </span>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <aside className="detail-right">
-            <section className="entitlement-card">
-              <span className="material-symbols-outlined entitlement-watermark">
-                pie_chart
-              </span>
-              <h4>Leave Entitlement</h4>
-              <div className="entitlement-body">
-                <div>
-                  <div className="entitlement-row">
-                    <p className="detail-label">Current Balance</p>
-                    <p className="detail-fact-heading">
-                      18 <span className="detail-fact-unit">Days</span>
+                  <div className="detail-reason">
+                    <p className="detail-label">Reason for Request</p>
+                    <p className="detail-reason-text">
+                      {request.reason ? `"${request.reason}"` : 'No reason provided.'}
                     </p>
                   </div>
-                  <div className="entitlement-track">
-                    <div className="entitlement-bar" style={{ width: '72%' }} />
-                  </div>
-                </div>
-                <div className="entitlement-request">
-                  <div>
-                    <span className="material-symbols-outlined">arrow_downward</span>
-                    <p>This Request</p>
-                  </div>
-                  <p className="entitlement-deduct">-5 Days</p>
-                </div>
-                <div className="entitlement-projected">
-                  <p className="detail-label-upper">Projected Balance</p>
-                  <p className="detail-fact-heading projected">
-                    13 <span className="detail-fact-unit">Days</span>
-                  </p>
-                </div>
-              </div>
-            </section>
 
-            <section className="manager-action">
-              <h4>Manager Action</h4>
-              <label className="detail-label" htmlFor="manager-comments">
-                Comments (Mandatory for rejection)
-              </label>
-              <textarea
-                id="manager-comments"
-                className="detail-textarea"
-                placeholder="Add your notes or feedback here..."
-                rows={4}
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-              />
-              {error && <p className="detail-error">{error}</p>}
-              <div className="action-buttons">
-                <button
-                  className="btn-approve-full"
-                  onClick={() => handleAction('approve')}
-                >
-                  <span className="material-symbols-outlined">check_circle</span>
-                  Approve Request
-                </button>
-                <button
-                  className="btn-reject-full"
-                  onClick={() => handleAction('reject')}
-                >
-                  <span className="material-symbols-outlined">cancel</span>
-                  Reject Request
-                </button>
+                  {request.status !== 'pending' && (
+                    <div className="detail-reason">
+                      <p className="detail-label">Reviewer Comments</p>
+                      <p className="detail-reason-text">
+                        {request.reviewerComments ?? '—'}
+                      </p>
+                    </div>
+                  )}
+                </section>
               </div>
-              <button className="history-link">
-                <span className="material-symbols-outlined">schedule</span>
-                View Past Leave History
-              </button>
-            </section>
-          </aside>
+
+              <aside className="detail-right">
+                {request.status === 'pending' ? (
+                  <section className="manager-action">
+                    <h4>Manager Action</h4>
+                    <label className="detail-label" htmlFor="manager-comments">
+                      Comments (Mandatory for rejection)
+                    </label>
+                    <textarea
+                      id="manager-comments"
+                      className="detail-textarea"
+                      placeholder="Add your notes or feedback here..."
+                      rows={4}
+                      value={comments}
+                      onChange={(e) => setComments(e.target.value)}
+                    />
+                    {formError && <p className="detail-error">{formError}</p>}
+                    <div className="action-buttons">
+                      <button
+                        className="btn-approve-full"
+                        disabled={approve.isPending || reject.isPending}
+                        onClick={handleApprove}
+                      >
+                        <span className="material-symbols-outlined">check_circle</span>
+                        Approve Request
+                      </button>
+                      <button
+                        className="btn-reject-full"
+                        disabled={approve.isPending || reject.isPending}
+                        onClick={handleReject}
+                      >
+                        <span className="material-symbols-outlined">cancel</span>
+                        Reject Request
+                      </button>
+                    </div>
+                  </section>
+                ) : (
+                  <section className="manager-action">
+                    <h4>Review Outcome</h4>
+                    <p className="detail-reason-text">
+                      This request was already {request.status} on{' '}
+                      {request.reviewedAt ? formatDate(request.reviewedAt.slice(0, 10)) : '—'}.
+                    </p>
+                  </section>
+                )}
+              </aside>
+            </>
+          )}
         </div>
 
         {action !== 'idle' && (
