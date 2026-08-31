@@ -7,15 +7,20 @@ import { EmployeesController, MeController } from '../employees.controller';
 import { EmployeesServiceImpl } from '../employees.service';
 import { Employee } from '../entities/employee.entity';
 import { TypeOrmEmployeesRepository } from '../repositories/employees.repository';
+import { SupabaseAdminService } from '../../common/supabase/supabase-admin.service';
 import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from '../tokens';
 
 export interface EmployeesServiceMock {
   create: jest.Mock;
+  findAll: jest.Mock;
   findByUserId: jest.Mock;
   getProfile: jest.Mock;
+  listWithAccessRoles: jest.Mock;
+  updateAccessRole: jest.Mock;
 }
 
 export interface EmployeesRepositoryMock {
+  findAll: jest.Mock;
   findByUserId: jest.Mock;
   findByEmployeeId: jest.Mock;
   findByEmail: jest.Mock;
@@ -24,22 +29,32 @@ export interface EmployeesRepositoryMock {
 }
 
 export interface TypeOrmRepositoryMock {
+  find: jest.Mock;
   findOneBy: jest.Mock;
   findOne: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
 }
 
+export interface SupabaseAdminServiceMock {
+  listUserRoles: jest.Mock;
+  updateUserRole: jest.Mock;
+}
+
 export function createEmployeesServiceMock(): EmployeesServiceMock {
   return {
     create: jest.fn(),
+    findAll: jest.fn(),
     findByUserId: jest.fn(),
     getProfile: jest.fn(),
+    listWithAccessRoles: jest.fn(),
+    updateAccessRole: jest.fn(),
   };
 }
 
 export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
   return {
+    findAll: jest.fn(),
     findByUserId: jest.fn(),
     findByEmployeeId: jest.fn(),
     findByEmail: jest.fn(),
@@ -48,8 +63,16 @@ export function createEmployeesRepositoryMock(): EmployeesRepositoryMock {
   };
 }
 
+export function createSupabaseAdminServiceMock(): SupabaseAdminServiceMock {
+  return {
+    listUserRoles: jest.fn(),
+    updateUserRole: jest.fn(),
+  };
+}
+
 export function createTypeOrmRepositoryMock(): TypeOrmRepositoryMock {
   return {
+    find: jest.fn(),
     findOneBy: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
@@ -73,11 +96,13 @@ export async function createEmployeesControllerModule(
 
 export async function createEmployeesServiceModule(
   employeesRepository: EmployeesRepositoryMock,
+  supabaseAdmin: SupabaseAdminServiceMock = createSupabaseAdminServiceMock(),
 ): Promise<TestingModule> {
   return Test.createTestingModule({
     providers: [
       EmployeesServiceImpl,
       { provide: EMPLOYEES_REPOSITORY, useValue: employeesRepository },
+      { provide: SupabaseAdminService, useValue: supabaseAdmin },
     ],
   }).compile();
 }
