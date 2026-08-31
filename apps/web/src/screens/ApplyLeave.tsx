@@ -1,24 +1,50 @@
 import { useState } from 'react'
+import { AxiosError } from 'axios'
 import sarah from '../assets/sarah.jpg'
 import office from '../assets/office.jpg'
-
-type SubmitState = 'idle' | 'processing' | 'sent'
+import { useLeavePolicies } from '../api/hooks/useLeavePolicies'
+import { useCreateLeaveRequest, useLeaveBalances } from '../api/hooks/useLeaveRequests'
+import { getErrorMessage } from '../api/errorMessage'
 
 function ApplyLeave({ onDone }: { onDone: () => void }) {
+  const { data: leaveTypes } = useLeavePolicies()
+  const balancesQuery = useLeaveBalances()
+  const { data: balances } = balancesQuery
+  const createRequest = useCreateLeaveRequest()
+
+  const noEmployeeRecord =
+    balancesQuery.error instanceof AxiosError &&
+    balancesQuery.error.response?.status === 404
+
+  const [leaveTypeCode, setLeaveTypeCode] = useState('')
+  const [halfDay, setHalfDay] = useState(false)
   const [startDate, setStartDate] = useState('')
-  const [submitState, setSubmitState] = useState<SubmitState>('idle')
+  const [endDate, setEndDate] = useState('')
+  const [reason, setReason] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitState('processing')
-    setTimeout(() => {
-      setSubmitState('sent')
-      setTimeout(() => {
-        setSubmitState('idle')
-        onDone()
-      }, 3000)
-    }, 1500)
+    createRequest.mutate(
+      {
+        leaveTypeCode,
+        startDate,
+        endDate: halfDay ? startDate : endDate,
+        halfDay,
+        reason: reason || null,
+      },
+      {
+        onSuccess: () => {
+          setTimeout(onDone, 1500)
+        },
+      },
+    )
   }
+
+  const submitState = createRequest.isPending
+    ? 'processing'
+    : createRequest.isSuccess
+      ? 'sent'
+      : 'idle'
 
   return (
     <>
@@ -69,18 +95,18 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                       <select
                         id="leave-type"
                         className="form-select"
-                        defaultValue=""
+                        required
+                        value={leaveTypeCode}
+                        onChange={(e) => setLeaveTypeCode(e.target.value)}
                       >
                         <option value="" disabled>
                           Select a type...
                         </option>
-                        <option value="annual">
-                          Annual Leave (Vacation)
-                        </option>
-                        <option value="sick">Sick Leave</option>
-                        <option value="unpaid">Unpaid Leave</option>
-                        <option value="bereavement">Bereavement</option>
-                        <option value="maternity">Maternity/Paternity</option>
+                        {(leaveTypes ?? []).map((type) => (
+                          <option key={type.id} value={type.id}>
+                            {type.name}
+                          </option>
+                        ))}
                       </select>
                       <span className="material-symbols-outlined select-chevron">
                         expand_more
@@ -89,7 +115,11 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                   </div>
                   <div className="half-day">
                     <label className="switch">
-                      <input type="checkbox" />
+                      <input
+                        type="checkbox"
+                        checked={halfDay}
+                        onChange={(e) => setHalfDay(e.target.checked)}
+                      />
                       <span className="switch-track" />
                       <span className="switch-label">
                         This is a half-day request
@@ -107,6 +137,7 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                       id="start-date"
                       className="form-input"
                       type="date"
+                      required
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
@@ -119,7 +150,11 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                       id="end-date"
                       className="form-input"
                       type="date"
+                      required={!halfDay}
+                      disabled={halfDay}
+                      value={halfDay ? startDate : endDate}
                       min={startDate}
+                      onChange={(e) => setEndDate(e.target.value)}
                     />
                   </div>
                 </div>
@@ -133,35 +168,29 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                     className="form-textarea"
                     placeholder="Briefly explain the reason for your request..."
                     rows={4}
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
                   />
                 </div>
 
-                <div className="form-field">
-                  <label className="form-label">
-                    Supporting Documents (Optional)
-                  </label>
-                  <label className="dropzone">
-                    <span className="material-symbols-outlined dropzone-icon">
-                      cloud_upload
-                    </span>
-                    <p className="dropzone-title">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="dropzone-hint">
-                      PDF, JPG, or PNG (Max. 5MB)
-                    </p>
-                    <input type="file" hidden />
-                  </label>
-                </div>
+                {noEmployeeRecord && (
+                  <p className="login-error">
+                    This account isn't linked to an employee record, so it
+                    can't submit a personal leave request.
+                  </p>
+                )}
+                {createRequest.isError && (
+                  <p className="login-error">{getErrorMessage(createRequest.error)}</p>
+                )}
 
                 <div className="form-actions">
-                  <button type="button" className="btn-cancel">
+                  <button type="button" className="btn-cancel" onClick={onDone}>
                     Cancel
                   </button>
                   <button
                     type="submit"
                     className={`btn-submit ${submitState === 'sent' ? 'btn-sent' : ''}`}
-                    disabled={submitState !== 'idle'}
+                    disabled={submitState !== 'idle' || noEmployeeRecord}
                   >
                     {submitState === 'processing' && (
                       <span className="material-symbols-outlined spin">
@@ -185,25 +214,29 @@ function ApplyLeave({ onDone }: { onDone: () => void }) {
                   <h3>Leave Balances</h3>
                 </div>
                 <div className="balances-card-body">
-                  <div className="balance-row">
-                    <span className="balance-label">Annual Leave</span>
-                    <span className="balance-value">14.5 Days</span>
-                  </div>
-                  <div className="mini-track">
-                    <div className="mini-bar bar-primary" style={{ width: '72.5%' }} />
-                  </div>
-                  <div className="balance-row">
-                    <span className="balance-label">Sick Leave</span>
-                    <span className="balance-value">8 Days</span>
-                  </div>
-                  <div className="mini-track">
-                    <div className="mini-bar bar-secondary" style={{ width: '40%' }} />
-                  </div>
+                  {(balances ?? []).map((b) => (
+                    <div key={b.leaveTypeCode}>
+                      <div className="balance-row">
+                        <span className="balance-label">{b.leaveTypeName}</span>
+                        <span className="balance-value">
+                          {b.remaining != null ? `${b.remaining} Days` : `${b.used} used`}
+                        </span>
+                      </div>
+                      {b.quota != null && (
+                        <div className="mini-track">
+                          <div
+                            className="mini-bar bar-primary"
+                            style={{ width: `${Math.max(0, Math.min(100, ((b.remaining ?? 0) / b.quota) * 100))}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                   <div className="info-note">
                     <span className="material-symbols-outlined">info</span>
                     <p>
-                      Your requested leave will be deducted from your Annual
-                      Leave balance upon approval.
+                      Your requested leave will be deducted from the selected
+                      leave type's balance once approved.
                     </p>
                   </div>
                 </div>

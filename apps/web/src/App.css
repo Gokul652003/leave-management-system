@@ -133,6 +133,22 @@
   padding-inline: 8px;
 }
 
+.sidebar-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-profile-info .profile-name,
+.sidebar-profile-info .profile-role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-logout-btn {
+  flex-shrink: 0;
+}
+
 .avatar-lg {
   width: 40px;
   height: 40px;
@@ -224,6 +240,42 @@
 
 .btn-primary:active {
   transform: scale(0.98);
+}
+
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+  padding: 32px;
+  border-radius: var(--radius);
+  background: var(--surface-container-low);
+}
+
+.login-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.login-card input {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--outline, #ccc);
+}
+
+.login-error {
+  color: #d92d20;
+  font-size: 13px;
 }
 
 .avatar-sm {
@@ -855,7 +907,9 @@ tbody td {
   .apply-grid {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 640px) {
   .sidebar {
     display: none;
   }
@@ -934,6 +988,11 @@ tbody td {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--stack-md);
+}
+
+.form-row + .form-row,
+.form-field-spaced {
+  margin-top: var(--stack-md);
 }
 
 .form-field {
@@ -1196,6 +1255,45 @@ tbody td {
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.org-dept-card + .org-dept-card {
+  margin-top: var(--stack-lg);
+}
+
+.org-dept-count {
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.org-dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--stack-md);
+}
+
+.org-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--stack-md);
+}
+
+.form-card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--on-surface);
 }
 
 .balances-card-header {

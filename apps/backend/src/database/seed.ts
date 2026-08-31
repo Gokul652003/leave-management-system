@@ -61,7 +61,7 @@ const authUsers: AuthUserSeed[] = [
 const authBaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-async function seedAuthUsers(): Promise<Map<string, string>> {
+async function fetchAllAuthUsers(): Promise<Map<string, string>> {
   if (!authBaseUrl || !serviceRoleKey) {
     throw new Error(
       'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to seed auth users',
@@ -69,6 +69,46 @@ async function seedAuthUsers(): Promise<Map<string, string>> {
   }
 
   const userIdByEmail = new Map<string, string>();
+  let page = 1;
+  const perPage = 1000;
+
+  for (;;) {
+    const response = await fetch(
+      `${authBaseUrl}/auth/v1/admin/users?page=${page}&per_page=${perPage}`,
+      {
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Failed to list auth users: ${response.status} ${body}`);
+    }
+
+    const body = (await response.json()) as {
+      users: { id: string; email: string }[];
+    };
+
+    for (const user of body.users) {
+      if (user.email) userIdByEmail.set(user.email, user.id);
+    }
+
+    if (body.users.length < perPage) break;
+    page += 1;
+  }
+
+  return userIdByEmail;
+}
+
+async function seedAuthUsers(): Promise<Map<string, string>> {
+  if (!authBaseUrl || !serviceRoleKey) {
+    throw new Error(
+      'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to seed auth users',
+    );
+  }
 
   for (const data of authUsers) {
     const response = await fetch(`${authBaseUrl}/auth/v1/admin/users`, {
@@ -88,26 +128,8 @@ async function seedAuthUsers(): Promise<Map<string, string>> {
     });
 
     if (response.ok) {
-      const body = (await response.json()) as { id: string };
-      userIdByEmail.set(data.email, body.id);
       console.log(`Seeded auth user ${data.email} (role: ${data.role})`);
     } else if (response.status === 422) {
-      const existing = await fetch(
-        `${authBaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(data.email)}`,
-        {
-          headers: {
-            apikey: serviceRoleKey,
-            Authorization: `Bearer ${serviceRoleKey}`,
-          },
-        },
-      );
-      const existingBody = (await existing.json()) as {
-        users?: { id: string }[];
-      };
-      const user = existingBody.users?.[0];
-      if (user) {
-        userIdByEmail.set(data.email, user.id);
-      }
       console.log(`Skipping auth user ${data.email}, already exists`);
     } else {
       const body = await response.text();
@@ -117,7 +139,7 @@ async function seedAuthUsers(): Promise<Map<string, string>> {
     }
   }
 
-  return userIdByEmail;
+  return fetchAllAuthUsers();
 }
 
 const employees: Partial<Employee>[] = [
@@ -139,6 +161,33 @@ const employees: Partial<Employee>[] = [
     managerId: 2940,
     joinDate: '2024-06-15',
     employeeId: 'EMP-3311-AC',
+    status: 'Active',
+  },
+  {
+    name: 'Admin User',
+    email: 'admin@acme.corp',
+    department: 'Administration',
+    role: 'System Administrator',
+    joinDate: '2023-01-01',
+    employeeId: 'EMP-1001-AC',
+    status: 'Active',
+  },
+  {
+    name: 'HR User',
+    email: 'hr@acme.corp',
+    department: 'Human Resources',
+    role: 'HR Manager',
+    joinDate: '2023-01-01',
+    employeeId: 'EMP-1002-AC',
+    status: 'Active',
+  },
+  {
+    name: 'Manager User',
+    email: 'manager@acme.corp',
+    department: 'Operations',
+    role: 'Team Manager',
+    joinDate: '2023-01-01',
+    employeeId: 'EMP-1003-AC',
     status: 'Active',
   },
 ];
