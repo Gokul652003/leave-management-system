@@ -53,6 +53,10 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+
+  @IsString()
+  @IsOptional()
   CORS_ORIGIN = 'http://localhost:5173';
 }
 
