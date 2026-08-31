@@ -1,88 +1,103 @@
-const policyCards = [
-  {
-    icon: 'beach_access',
-    iconClass: 'policy-teal',
-    title: 'Annual Leave',
-    desc: 'General vacation days for all full-time employees.',
-    quota: '25 Days',
-    carry: 'Max 5 Days',
-    accrual: 'Upfront',
-    accrualClass: 'pill-emerald',
-  },
-  {
-    icon: 'medical_services',
-    iconClass: 'policy-rose',
-    title: 'Sick Leave',
-    desc: 'Medical leave for illnesses and healthcare appointments.',
-    quota: '12 Days',
-    carry: 'None',
-    accrual: 'Monthly',
-    accrualClass: 'pill-blue',
-  },
-  {
-    icon: 'child_care',
-    iconClass: 'policy-purple',
-    title: 'Maternity Leave',
-    desc: 'Protected time off for expectant mothers and new parents.',
-    quota: '120 Days',
-    carry: 'N/A',
-    accrual: 'Upfront',
-    accrualClass: 'pill-amber',
-  },
-  {
-    icon: 'person',
-    iconClass: 'policy-amber',
-    title: 'Personal Day',
-    desc: 'Flexible leave for miscellaneous personal requirements.',
-    quota: '3 Days',
-    carry: 'None',
-    accrual: 'Yearly',
-    accrualClass: 'pill-emerald',
-  },
-  {
-    icon: 'school',
-    iconClass: 'policy-indigo',
-    title: 'Study Leave',
-    desc: 'Dedicated time for exams and professional certification training.',
-    quota: '5 Days',
-    carry: 'Max 2 Days',
-    accrual: 'Yearly',
-    accrualClass: 'pill-emerald',
-  },
-]
+import { useState } from 'react'
+import {
+  useCreateLeavePolicy,
+  useDeleteLeavePolicy,
+  useLeavePolicies,
+  useUpdateLeavePolicy,
+} from '../api/hooks/useLeavePolicies'
+import { getErrorMessage } from '../api/errorMessage'
+import type { LeavePolicy } from '../api/types'
 
-const stats = [
-  { label: 'Active Policies', value: '08', valueClass: 'big' },
-  { label: 'Avg. Annual Quota', value: '22', valueClass: 'big' },
-  { label: 'Last Updated', value: 'Oct 24, 2023', valueClass: 'md' },
-  { label: 'Pending Sync', value: '0 Employees', valueClass: 'md' },
-]
+type FormState = {
+  code: string
+  name: string
+  annualQuota: string
+  maxDaysPerRequest: string
+  requiresDocumentationOverDays: string
+}
 
-const globalSettings = [
-  {
-    name: 'Fiscal Year Start',
-    value: 'January 01',
-    modified: '2023-12-01',
-    status: 'Active',
-    statusClass: 'gt-active',
-  },
-  {
-    name: 'Auto-Approval Threshold',
-    value: '1 Day',
-    modified: '2024-01-15',
-    status: 'Active',
-    statusClass: 'gt-active',
-  },
-  {
-    name: 'Emergency Leave Overdraft',
-    value: 'Allowed (Max 2)',
-    modified: '2023-08-22',
-    status: 'Pending Review',
-    statusClass: 'gt-pending',
-  },
-]
+const emptyForm: FormState = {
+  code: '',
+  name: '',
+  annualQuota: '',
+  maxDaysPerRequest: '',
+  requiresDocumentationOverDays: '',
+}
+
+function toInt(value: string): number | null {
+  if (value.trim() === '') return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
 
 function LeavePolicies({ onApply }: { onApply: () => void }) {
+  const { data: policies, isLoading, isError, error } = useLeavePolicies()
+  const createPolicy = useCreateLeavePolicy()
+  const updatePolicy = useUpdateLeavePolicy()
+  const deletePolicy = useDeleteLeavePolicy()
+
+  const [showForm, setShowForm] = useState(false)
+  const [editingCode, setEditingCode] = useState<string | null>(null)
+  const [form, setForm] = useState<FormState>(emptyForm)
+
+  const startCreate = () => {
+    setEditingCode(null)
+    setForm(emptyForm)
+    setShowForm(true)
+  }
+
+  const startEdit = (policy: LeavePolicy) => {
+    setEditingCode(policy.id)
+    setForm({
+      code: policy.id,
+      name: policy.name,
+      annualQuota: policy.annualQuota?.toString() ?? '',
+      maxDaysPerRequest: policy.maxDaysPerRequest?.toString() ?? '',
+      requiresDocumentationOverDays:
+        policy.requiresDocumentationOverDays?.toString() ?? '',
+    })
+    setShowForm(true)
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingCode(null)
+    setForm(emptyForm)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const payload = {
+      name: form.name,
+      annualQuota: toInt(form.annualQuota),
+      maxDaysPerRequest: toInt(form.maxDaysPerRequest),
+      requiresDocumentationOverDays: toInt(form.requiresDocumentationOverDays),
+    }
+
+    if (editingCode) {
+      updatePolicy.mutate(
+        { code: editingCode, input: payload },
+        { onSuccess: closeForm },
+      )
+    } else {
+      createPolicy.mutate(
+        { code: form.code.toUpperCase(), ...payload },
+        { onSuccess: closeForm },
+      )
+    }
+  }
+
+  const saving = createPolicy.isPending || updatePolicy.isPending
+  const saveError = createPolicy.error ?? updatePolicy.error
+
+  const activeCount = policies?.length ?? 0
+  const quotas = (policies ?? [])
+    .map((p) => p.annualQuota)
+    .filter((q): q is number => typeof q === 'number')
+  const avgQuota = quotas.length
+    ? Math.round(quotas.reduce((a, b) => a + b, 0) / quotas.length)
+    : null
+
   return (
     <>
       <header className="topbar">
@@ -112,103 +127,194 @@ function LeavePolicies({ onApply }: { onApply: () => void }) {
                 contracts and seniority.
               </p>
             </div>
-            <button className="btn-primary btn-lg">
+            <button className="btn-primary btn-lg" onClick={startCreate}>
               <span className="material-symbols-outlined">add_circle</span>
               <span>Add New Leave Type</span>
             </button>
           </section>
 
-          <section className="stats-grid policy-stats">
-            {stats.map((s) => (
-              <div key={s.label} className="stat-card">
-                <p className="stat-label">{s.label}</p>
-                {s.valueClass === 'big' ? (
-                  <p className="stat-value stat-primary">{s.value}</p>
-                ) : (
-                  <p className="policy-stat-md">{s.value}</p>
-                )}
+          {isLoading && <p className="detail-label">Loading leave policies...</p>}
+          {isError && (
+            <p className="detail-error">
+              {getErrorMessage(error)}
+            </p>
+          )}
+
+          {showForm && (
+            <section className="form-card">
+              <div className="form-card-header">
+                <h3>{editingCode ? 'Edit Leave Type' : 'Add New Leave Type'}</h3>
+                <button className="icon-button" aria-label="Close" onClick={closeForm}>
+                  <span className="material-symbols-outlined">close</span>
+                </button>
               </div>
-            ))}
+              <form onSubmit={handleSubmit}>
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="lp-code">
+                      Code
+                    </label>
+                    <input
+                      id="lp-code"
+                      className="form-input"
+                      placeholder="e.g. WFH"
+                      required
+                      disabled={!!editingCode}
+                      value={form.code}
+                      onChange={(e) => setForm({ ...form, code: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="lp-name">
+                      Name
+                    </label>
+                    <input
+                      id="lp-name"
+                      className="form-input"
+                      placeholder="e.g. Work From Home"
+                      required
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="lp-quota">
+                      Annual Quota (days)
+                    </label>
+                    <input
+                      id="lp-quota"
+                      className="form-input"
+                      type="number"
+                      min={0}
+                      value={form.annualQuota}
+                      onChange={(e) =>
+                        setForm({ ...form, annualQuota: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="lp-max">
+                      Max Days Per Request
+                    </label>
+                    <input
+                      id="lp-max"
+                      className="form-input"
+                      type="number"
+                      min={1}
+                      value={form.maxDaysPerRequest}
+                      onChange={(e) =>
+                        setForm({ ...form, maxDaysPerRequest: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="form-field form-field-spaced">
+                  <label className="form-label" htmlFor="lp-docs">
+                    Requires Documentation Over (days)
+                  </label>
+                  <input
+                    id="lp-docs"
+                    className="form-input"
+                    type="number"
+                    min={0}
+                    value={form.requiresDocumentationOverDays}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        requiresDocumentationOverDays: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                {saveError && (
+                  <p className="login-error">{getErrorMessage(saveError)}</p>
+                )}
+
+                <div className="form-actions">
+                  <button type="button" className="btn-cancel" onClick={closeForm}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-submit" disabled={saving}>
+                    {saving ? 'Saving...' : editingCode ? 'Save Changes' : 'Create Policy'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          <section className="stats-grid policy-stats">
+            <div className="stat-card">
+              <p className="stat-label">Active Policies</p>
+              <p className="stat-value stat-primary">{activeCount}</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Avg. Annual Quota</p>
+              <p className="stat-value stat-primary">{avgQuota ?? '—'}</p>
+            </div>
           </section>
 
           <section className="policy-cards">
-            {policyCards.map((card) => (
-              <div key={card.title} className="glass-card policy-card-mini">
+            {(policies ?? []).map((policy) => (
+              <div key={policy.id} className="glass-card policy-card-mini">
                 <div className="policy-card-top">
-                  <div className={`policy-icon ${card.iconClass}`}>
-                    <span className="material-symbols-outlined">{card.icon}</span>
+                  <div className="policy-icon policy-teal">
+                    <span className="material-symbols-outlined">event_note</span>
                   </div>
                   <div className="policy-card-actions">
-                    <button aria-label={`Edit ${card.title}`}>
+                    <button
+                      aria-label={`Edit ${policy.name}`}
+                      onClick={() => startEdit(policy)}
+                    >
                       <span className="material-symbols-outlined">edit</span>
                     </button>
-                    <button aria-label={`Delete ${card.title}`}>
+                    <button
+                      aria-label={`Delete ${policy.name}`}
+                      onClick={() => deletePolicy.mutate(policy.id)}
+                    >
                       <span className="material-symbols-outlined">delete</span>
                     </button>
                   </div>
                 </div>
                 <div className="policy-card-body">
-                  <h4>{card.title}</h4>
-                  <p>{card.desc}</p>
+                  <h4>{policy.name}</h4>
+                  <p className="detail-mono">{policy.id}</p>
                 </div>
                 <div className="policy-card-details">
                   <div className="policy-detail-row">
                     <span>Annual Quota</span>
-                    <span className="policy-detail-value">{card.quota}</span>
+                    <span className="policy-detail-value">
+                      {policy.annualQuota != null ? `${policy.annualQuota} Days` : '—'}
+                    </span>
                   </div>
                   <div className="policy-detail-row">
-                    <span>Carry-forward</span>
-                    <span className="policy-detail-value">{card.carry}</span>
+                    <span>Max Per Request</span>
+                    <span className="policy-detail-value">
+                      {policy.maxDaysPerRequest != null
+                        ? `${policy.maxDaysPerRequest} Days`
+                        : '—'}
+                    </span>
                   </div>
                   <div className="policy-detail-row">
-                    <span>Accrual Frequency</span>
-                    <span className={`pill ${card.accrualClass}`}>
-                      {card.accrual}
+                    <span>Documentation</span>
+                    <span className="policy-detail-value">
+                      {policy.requiresDocumentationOverDays != null
+                        ? `Over ${policy.requiresDocumentationOverDays} Days`
+                        : 'Not Required'}
                     </span>
                   </div>
                 </div>
               </div>
             ))}
-            <button className="policy-add-card">
+            <button className="policy-add-card" onClick={startCreate}>
               <div className="policy-add-icon">
                 <span className="material-symbols-outlined">add</span>
               </div>
               <span className="policy-add-title">New Policy Type</span>
               <p className="policy-add-hint">Click to define a custom leave</p>
             </button>
-          </section>
-
-          <section className="global-settings">
-            <div className="global-settings-header">
-              <h3>Global Settings</h3>
-              <button className="global-edit">Edit Global Rules</button>
-            </div>
-            <div className="global-settings-wrap">
-              <table className="global-table">
-                <thead>
-                  <tr>
-                    <th>Setting Name</th>
-                    <th>Value</th>
-                    <th>Last Modified</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {globalSettings.map((setting) => (
-                    <tr key={setting.name}>
-                      <td className="gt-name">{setting.name}</td>
-                      <td className="gt-mono">{setting.value}</td>
-                      <td className="gt-mono">{setting.modified}</td>
-                      <td>
-                        <span className={`gt-pill ${setting.statusClass}`}>
-                          {setting.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </section>
 
           <section className="help-banner">
