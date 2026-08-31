@@ -1,11 +1,15 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { randomInt } from 'node:crypto';
+import type { Role } from '../common/decorators/roles.decorator';
+import { SupabaseAdminService } from '../common/supabase/supabase-admin.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { EmployeeAccessRoleResponseDto } from './dto/employee-access-role-response.dto';
 import {
   EmployeeResponseDto,
   MeResponseDto,
@@ -20,6 +24,7 @@ export class EmployeesServiceImpl implements IEmployeesService {
   constructor(
     @Inject(EMPLOYEES_REPOSITORY)
     private readonly employeesRepository: IEmployeesRepository,
+    private readonly supabaseAdmin: SupabaseAdminService,
   ) {}
 
   async create(dto: CreateEmployeeDto): Promise<EmployeeResponseDto> {
@@ -47,6 +52,25 @@ export class EmployeesServiceImpl implements IEmployeesService {
     return this.toResponse(saved);
   }
 
+  async findAll(): Promise<EmployeeResponseDto[]> {
+    const employees = await this.employeesRepository.findAll();
+    return employees.map((employee) => this.toResponse(employee));
+  }
+
+  async getEmployeeRef(userId: string) {
+    const employee = await this.employeesRepository.findByUserId(userId);
+
+    if (!employee) {
+      throw new NotFoundException('Employee profile not found');
+    }
+
+    return {
+      id: employee.id,
+      employeeId: employee.employeeId,
+      name: employee.name,
+    };
+  }
+
   async getProfile(employeeId: string): Promise<EmployeeResponseDto> {
     const employee =
       await this.employeesRepository.findByEmployeeId(employeeId);
@@ -56,6 +80,42 @@ export class EmployeesServiceImpl implements IEmployeesService {
     }
 
     return this.toResponse(employee);
+  }
+
+  async listWithAccessRoles(): Promise<EmployeeAccessRoleResponseDto[]> {
+    const [employees, roleByUserId] = await Promise.all([
+      this.employeesRepository.findAll(),
+      this.supabaseAdmin.listUserRoles(),
+    ]);
+
+    return employees.map((employee) => ({
+      ...this.toResponse(employee),
+      accessRole: employee.userId
+        ? (roleByUserId.get(employee.userId) ?? null)
+        : null,
+    }));
+  }
+
+  async updateAccessRole(
+    employeeId: string,
+    role: Role,
+  ): Promise<EmployeeAccessRoleResponseDto> {
+    const employee =
+      await this.employeesRepository.findByEmployeeId(employeeId);
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    if (!employee.userId) {
+      throw new BadRequestException(
+        'Employee has no linked auth account to assign a role to',
+      );
+    }
+
+    await this.supabaseAdmin.updateUserRole(employee.userId, role);
+
+    return { ...this.toResponse(employee), accessRole: role };
   }
 
   private toResponse(employee: Employee): EmployeeResponseDto {

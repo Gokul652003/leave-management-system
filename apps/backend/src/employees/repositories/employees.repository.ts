@@ -11,6 +11,10 @@ export class TypeOrmEmployeesRepository implements IEmployeesRepository {
     private readonly repository: Repository<Employee>,
   ) {}
 
+  findAll(): Promise<Employee[]> {
+    return this.repository.find({ order: { name: 'ASC' } });
+  }
+
   findByUserId(id: string): Promise<Employee | null> {
     return this.repository.findOneBy({ userId: id });
   }
