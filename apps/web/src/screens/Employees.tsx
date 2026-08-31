@@ -1,110 +1,59 @@
 import { useState } from 'react'
+import { useCreateEmployee } from '../api/hooks/useCreateEmployee'
+import { useEmployees } from '../api/hooks/useEmployees'
+import { getErrorMessage } from '../api/errorMessage'
 
 type Status = 'Active' | 'On Leave' | 'Inactive'
 
-type Employee = {
-  id: string
-  initials: string
-  avatarClass: string
-  name: string
-  email: string
-  department: string
-  role: string
-  status: Status
-  lastActive: string
+const AVATAR_CLASSES = ['avatar-primary', 'avatar-secondary', 'avatar-tertiary', 'avatar-slate', 'avatar-teal']
+
+function initialsOf(name: string) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 
-const employees: Employee[] = [
-  {
-    id: 'em',
-    initials: 'EM',
-    avatarClass: 'avatar-primary',
-    name: 'Elena Martinez',
-    email: 'elena.m@acme.corp',
-    department: 'Engineering',
-    role: 'Senior Developer',
-    status: 'Active',
-    lastActive: '2023-10-24',
-  },
-  {
-    id: 'js',
-    initials: 'JS',
-    avatarClass: 'avatar-secondary',
-    name: 'Jordan Smith',
-    email: 'j.smith@acme.corp',
-    department: 'Marketing',
-    role: 'Brand Strategist',
-    status: 'On Leave',
-    lastActive: '2023-10-20',
-  },
-  {
-    id: 'tc',
-    initials: 'TC',
-    avatarClass: 'avatar-tertiary',
-    name: 'Tariq Chen',
-    email: 't.chen@acme.corp',
-    department: 'Product',
-    role: 'Product Manager',
-    status: 'Active',
-    lastActive: '2023-10-24',
-  },
-  {
-    id: 'lw',
-    initials: 'LW',
-    avatarClass: 'avatar-slate',
-    name: 'Linda White',
-    email: 'l.white@acme.corp',
-    department: 'Operations',
-    role: 'Logistics Lead',
-    status: 'Inactive',
-    lastActive: '2023-09-12',
-  },
-  {
-    id: 'ak',
-    initials: 'AK',
-    avatarClass: 'avatar-teal',
-    name: 'Arjun Kapoor',
-    email: 'a.kapoor@acme.corp',
-    department: 'Engineering',
-    role: 'Frontend Engineer',
-    status: 'Active',
-    lastActive: '2023-10-23',
-  },
-]
-
-const stats = [
-  { icon: 'group', iconClass: 'stat-primary', label: 'Total Employees', value: '1,284' },
-  { icon: 'check_circle', iconClass: 'stat-emerald', label: 'Active Now', value: '1,156' },
-  { icon: 'beach_access', iconClass: 'stat-amber', label: 'On Leave', value: '42' },
-  { icon: 'person_off', iconClass: 'stat-slate', label: 'Inactive', value: '86' },
-]
-
-function Employees() {
+function Employees({
+  onViewProfile,
+  onOpenOrgChart,
+}: {
+  onViewProfile: (employeeId: string) => void
+  onOpenOrgChart: () => void
+}) {
+  const { data: employees, isLoading, isError, error } = useEmployees()
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Status | 'All'>('All')
-  const [rows, setRows] = useState(employees)
+  const [lookupId, setLookupId] = useState('')
+  const [showAddForm, setShowAddForm] = useState(false)
+  const createEmployee = useCreateEmployee()
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    department: '',
+    role: '',
+    joinDate: '',
+  })
 
-  const filtered = rows.filter((emp) => {
+  const filtered = (employees ?? []).filter((emp) => {
     const matchesQuery = emp.name.toLowerCase().includes(query.toLowerCase())
     const matchesFilter = filter === 'All' || emp.status === filter
     return matchesQuery && matchesFilter
   })
 
-  const toggleStatus = (id: string) => {
-    setRows((prev) =>
-      prev.map((emp) =>
-        emp.id === id
-          ? {
-              ...emp,
-              status:
-                emp.status === 'Inactive'
-                  ? ('Active' as const)
-                  : ('Inactive' as const),
-            }
-          : emp,
-      ),
-    )
-  }
+  const total = employees?.length ?? 0
+  const activeCount = (employees ?? []).filter((e) => e.status === 'Active').length
+  const onLeaveCount = (employees ?? []).filter((e) => e.status === 'On Leave').length
+  const inactiveCount = (employees ?? []).filter((e) => e.status === 'Inactive').length
+
+  const stats = [
+    { icon: 'group', iconClass: 'stat-primary', label: 'Total Employees', value: total },
+    { icon: 'check_circle', iconClass: 'stat-emerald', label: 'Active Now', value: activeCount },
+    { icon: 'beach_access', iconClass: 'stat-amber', label: 'On Leave', value: onLeaveCount },
+    { icon: 'person_off', iconClass: 'stat-slate', label: 'Inactive', value: inactiveCount },
+  ]
 
   return (
     <>
@@ -124,7 +73,7 @@ function Employees() {
             <span className="material-symbols-outlined">notifications</span>
             <span className="notif-dot" />
           </button>
-          <button className="btn-primary btn-add">
+          <button className="btn-primary btn-add" onClick={() => setShowAddForm((v) => !v)}>
             <span className="material-symbols-outlined">person_add</span>
             <span>Add Employee</span>
           </button>
@@ -132,6 +81,154 @@ function Employees() {
       </header>
       <main className="main employees-main">
         <div className="main-content">
+          <section className="filter-bar">
+            <div className="filter-left">
+              <div className="global-search">
+                <span className="material-symbols-outlined">badge</span>
+                <input
+                  type="text"
+                  placeholder="Look up profile by Employee ID (e.g. EMP-3311-AC)"
+                  value={lookupId}
+                  onChange={(e) => setLookupId(e.target.value)}
+                />
+              </div>
+              <button
+                className="filter-chip"
+                onClick={() => lookupId.trim() && onViewProfile(lookupId.trim())}
+              >
+                View Profile
+              </button>
+            </div>
+          </section>
+
+          {showAddForm && (
+            <section className="form-card">
+              <div className="form-card-header">
+                <h3>Add New Employee</h3>
+                <button
+                  className="icon-button"
+                  aria-label="Close"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  createEmployee.mutate(
+                    {
+                      name: form.name,
+                      email: form.email,
+                      department: form.department,
+                      role: form.role,
+                      joinDate: form.joinDate || undefined,
+                    },
+                    {
+                      onSuccess: () => {
+                        setForm({ name: '', email: '', department: '', role: '', joinDate: '' })
+                        setShowAddForm(false)
+                      },
+                    },
+                  )
+                }}
+              >
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="emp-name">
+                      Full Name
+                    </label>
+                    <input
+                      id="emp-name"
+                      className="form-input"
+                      placeholder="e.g. Ravi Kumar"
+                      required
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="emp-email">
+                      Email
+                    </label>
+                    <input
+                      id="emp-email"
+                      className="form-input"
+                      type="email"
+                      placeholder="e.g. r.kumar@acme.corp"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="emp-department">
+                      Department
+                    </label>
+                    <input
+                      id="emp-department"
+                      className="form-input"
+                      placeholder="e.g. Engineering"
+                      required
+                      value={form.department}
+                      onChange={(e) => setForm({ ...form, department: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label" htmlFor="emp-role">
+                      Role
+                    </label>
+                    <input
+                      id="emp-role"
+                      className="form-input"
+                      placeholder="e.g. Backend Engineer"
+                      required
+                      value={form.role}
+                      onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-field form-field-spaced">
+                  <label className="form-label" htmlFor="emp-join-date">
+                    Join Date
+                  </label>
+                  <input
+                    id="emp-join-date"
+                    className="form-input"
+                    type="date"
+                    value={form.joinDate}
+                    onChange={(e) => setForm({ ...form, joinDate: e.target.value })}
+                  />
+                </div>
+
+                {createEmployee.isError && (
+                  <p className="login-error">
+                    {getErrorMessage(createEmployee.error)}
+                  </p>
+                )}
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowAddForm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={createEmployee.isPending}
+                  >
+                    {createEmployee.isPending ? 'Creating...' : 'Create Employee'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
           <section className="stats-bento">
             {stats.map((s) => (
               <div key={s.label} className="stat-bento-card">
@@ -148,11 +245,6 @@ function Employees() {
 
           <section className="filter-bar">
             <div className="filter-left">
-              <button className="filter-chip">
-                <span className="material-symbols-outlined">filter_list</span>
-                <span>All Departments</span>
-                <span className="material-symbols-outlined">keyboard_arrow_down</span>
-              </button>
               <button
                 className="filter-chip"
                 onClick={() =>
@@ -174,15 +266,14 @@ function Employees() {
                 Clear Filters
               </button>
             </div>
-            <div className="filter-right">
-              <button className="icon-btn-border" aria-label="Export">
-                <span className="material-symbols-outlined">file_download</span>
-              </button>
-              <button className="icon-btn-border" aria-label="Print">
-                <span className="material-symbols-outlined">print</span>
-              </button>
-            </div>
           </section>
+
+          {isLoading && <p className="detail-label">Loading employees...</p>}
+          {isError && (
+            <p className="detail-error">
+              {getErrorMessage(error)}
+            </p>
+          )}
 
           <section className="employees-table-card">
             <div className="employees-table-wrap">
@@ -193,20 +284,26 @@ function Employees() {
                     <th>Department</th>
                     <th>Role</th>
                     <th>Status</th>
-                    <th>Last Active</th>
+                    <th>Employee ID</th>
                     <th className="th-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((emp) => (
-                    <tr key={emp.id} className="employee-row">
+                  {filtered.map((emp, i) => (
+                    <tr key={emp.employeeId} className="employee-row">
                       <td>
                         <div className="emp-cell">
-                          <div className={`emp-avatar ${emp.avatarClass}`}>
-                            {emp.initials}
+                          <div className={`emp-avatar ${AVATAR_CLASSES[i % AVATAR_CLASSES.length]}`}>
+                            {initialsOf(emp.name)}
                           </div>
                           <div>
-                            <p className="emp-name">{emp.name}</p>
+                            <p
+                              className="emp-name"
+                              style={{ cursor: 'pointer' }}
+                              onClick={() => onViewProfile(emp.employeeId)}
+                            >
+                              {emp.name}
+                            </p>
                             <p className="emp-email">{emp.email}</p>
                           </div>
                         </div>
@@ -219,26 +316,15 @@ function Employees() {
                           {emp.status}
                         </span>
                       </td>
-                      <td className="td-mono-cell">{emp.lastActive}</td>
+                      <td className="td-mono-cell">{emp.employeeId}</td>
                       <td className="td-right">
                         <div className="row-hover-actions">
-                          <button className="row-btn edit-btn" title="Edit Profile">
-                            <span className="material-symbols-outlined">edit</span>
-                          </button>
                           <button
-                            className={`row-btn ${emp.status === 'Inactive' ? 'edit-btn' : 'danger-btn'}`}
-                            title={
-                              emp.status === 'Inactive'
-                                ? 'Reactivate'
-                                : 'Deactivate'
-                            }
-                            onClick={() => toggleStatus(emp.id)}
+                            className="row-btn edit-btn"
+                            title="View Profile"
+                            onClick={() => onViewProfile(emp.employeeId)}
                           >
-                            <span className="material-symbols-outlined">
-                              {emp.status === 'Inactive'
-                                ? 'person_check'
-                                : 'person_off'}
-                            </span>
+                            <span className="material-symbols-outlined">visibility</span>
                           </button>
                         </div>
                       </td>
@@ -249,21 +335,8 @@ function Employees() {
             </div>
             <div className="pagination-footer">
               <p className="table-footer-text">
-                Showing {filtered.length} of 1,284 employees
+                Showing {filtered.length} of {total} employees
               </p>
-              <div className="page-controls">
-                <button className="page-btn" disabled aria-label="Previous page">
-                  <span className="material-symbols-outlined">chevron_left</span>
-                </button>
-                <button className="page-btn page-active">1</button>
-                <button className="page-btn">2</button>
-                <button className="page-btn">3</button>
-                <span className="page-ellipsis">...</span>
-                <button className="page-btn">257</button>
-                <button className="page-btn" aria-label="Next page">
-                  <span className="material-symbols-outlined">chevron_right</span>
-                </button>
-              </div>
             </div>
           </section>
 
@@ -271,11 +344,12 @@ function Employees() {
             <div className="promo-content">
               <h3>Enhance your team building</h3>
               <p>
-                Use our new automated organizational chart tools to visualize
-                reporting lines and discover cross-functional collaboration
-                opportunities.
+                Visualize reporting lines and discover cross-functional
+                collaboration opportunities.
               </p>
-              <button className="promo-btn">Explore Org Chart</button>
+              <button className="promo-btn" onClick={onOpenOrgChart}>
+                Explore Org Chart
+              </button>
             </div>
             <span className="material-symbols-outlined promo-icon">
               account_tree
