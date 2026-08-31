@@ -14,4 +14,20 @@ export class TypeOrmLeavesRepository implements ILeavesRepository {
   findAll(): Promise<LeaveType[]> {
     return this.repository.find();
   }
+
+  findByCode(code: string): Promise<LeaveType | null> {
+    return this.repository.findOne({ where: { code } });
+  }
+
+  create(data: Partial<LeaveType>): LeaveType {
+    return this.repository.create(data);
+  }
+
+  save(type: LeaveType): Promise<LeaveType> {
+    return this.repository.save(type);
+  }
+
+  remove(type: LeaveType): Promise<LeaveType> {
+    return this.repository.softRemove(type);
+  }
 }
