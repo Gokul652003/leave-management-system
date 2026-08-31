@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SupabaseAdminService } from '../common/supabase/supabase-admin.service';
 import { Employee } from './entities/employee.entity';
 import { EmployeesController, MeController } from './employees.controller';
 import { EmployeesServiceImpl } from './employees.service';
@@ -10,6 +11,7 @@ import { EMPLOYEES_REPOSITORY, EMPLOYEES_SERVICE } from './tokens';
   imports: [TypeOrmModule.forFeature([Employee])],
   controllers: [EmployeesController, MeController],
   providers: [
+    SupabaseAdminService,
     { provide: EMPLOYEES_REPOSITORY, useClass: TypeOrmEmployeesRepository },
     { provide: EMPLOYEES_SERVICE, useClass: EmployeesServiceImpl },
   ],
