@@ -1,142 +1,66 @@
+import { AxiosError } from 'axios'
 import avatar from '../assets/avatar.jpg'
+import { useMyLeaveRequests, useLeaveBalances } from '../api/hooks/useLeaveRequests'
+import { getErrorMessage } from '../api/errorMessage'
 
-const leaveBalances = [
-  {
-    icon: 'medical_services',
-    label: 'SICK LEAVE',
-    used: 3,
-    total: 15,
-    iconClass: 'rose',
-    barClass: 'rose',
-    accentClass: 'rose',
-  },
-  {
-    icon: 'beach_access',
-    label: 'CASUAL LEAVE',
-    used: 4,
-    total: 12,
-    iconClass: 'amber',
-    barClass: 'amber',
-    accentClass: 'amber',
-  },
-  {
-    icon: 'flight_takeoff',
-    label: 'EARNED LEAVE',
-    used: 6,
-    total: 30,
-    iconClass: 'teal',
-    barClass: 'teal',
-    accentClass: 'teal',
-  },
-]
-
-const approvedLeaves = [
-  {
-    icon: 'flight_takeoff',
-    iconClass: 'teal',
-    type: 'Earned Leave',
-    dates: 'Oct 24 - Oct 28, 2023',
-    duration: '5 Days',
-    status: 'Approved',
-    statusClass: 'approved',
-  },
-  {
-    icon: 'beach_access',
-    iconClass: 'amber',
-    type: 'Casual Leave',
-    dates: 'Nov 12, 2023',
-    duration: '1 Day',
-    status: 'Pending',
-    statusClass: 'pending',
-  },
-]
-
-function LeaveBalanceCard({
-  card,
-}: {
-  card: (typeof leaveBalances)[number]
-}) {
-  const remaining = card.total - card.used
-  const pct = Math.round((remaining / card.total) * 100)
-  return (
-    <div className="glass-card leave-card">
-      <div className="leave-card-icon">
-        <span className={`material-symbols-outlined icon-${card.iconClass}`}>
-          {card.icon}
-        </span>
-      </div>
-      <span className="leave-card-label">{card.label}</span>
-      <div className="leave-card-value">
-        <span>{remaining}</span>
-        <span className="leave-card-total">/ {card.total} days</span>
-      </div>
-      <div className="progress-track">
-        <div
-          className={`progress-bar bar-${card.barClass}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="leave-card-footer">
-        <span className={`text-${card.accentClass}`}>{card.used} used</span>
-        <span className="text-secondary">{remaining} remaining</span>
-      </div>
-    </div>
-  )
+const ICON_BY_CODE: Record<string, string> = {
+  sick: 'medical_services',
+  annual: 'beach_access',
+  unpaid: 'flight_takeoff',
+  bereavement: 'flight_takeoff',
+  maternity: 'child_care',
 }
 
-function Calendar() {
-  const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-  const days = Array.from({ length: 31 }, (_, i) => i + 1)
-  const leaveDays = [24, 25, 26, 27, 28]
-  const today = 15
+const COLOR_CLASSES = ['rose', 'amber', 'teal', 'sky', 'emerald']
 
-  return (
-    <div className="calendar-card">
-      <div className="calendar-header">
-        <h3>Team Availability</h3>
-        <div className="calendar-nav">
-          <button aria-label="Previous month">
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-          <button aria-label="Next month">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-      </div>
-      <div className="calendar-grid calendar-weekdays">
-        {weekdays.map((d, i) => (
-          <span key={`${d}-${i}`}>{d}</span>
-        ))}
-      </div>
-      <div className="calendar-grid">
-        {days.map((day) => (
-          <div
-            key={day}
-            className={`calendar-day ${
-              leaveDays.includes(day)
-                ? 'calendar-day-leave'
-                : day === today
-                  ? 'calendar-day-today'
-                  : ''
-            }`}
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="calendar-legend">
-        <div className="legend-item">
-          <span className="dot dot-leave" /> Your Leave
-        </div>
-        <div className="legend-item">
-          <span className="dot dot-holiday" /> Team Holiday
-        </div>
-      </div>
-    </div>
-  )
+function formatDateRange(start: string, end: string) {
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: '2-digit', year: 'numeric' }
+  const startStr = new Date(`${start}T00:00:00Z`).toLocaleDateString('en-US', opts)
+  if (start === end) return startStr
+  const endStr = new Date(`${end}T00:00:00Z`).toLocaleDateString('en-US', opts)
+  return `${startStr} - ${endStr}`
 }
 
 function Dashboard({ onApply }: { onApply: () => void }) {
+  const balancesQuery = useLeaveBalances()
+  const requestsQuery = useMyLeaveRequests()
+  const { data: balances } = balancesQuery
+  const { data: requests } = requestsQuery
+
+  const pendingCount = (requests ?? []).filter((r) => r.status === 'pending').length
+  const upcomingApproved = (requests ?? [])
+    .filter((r) => r.status === 'approved')
+    .slice(0, 5)
+
+  const noEmployeeRecord =
+    balancesQuery.error instanceof AxiosError &&
+    balancesQuery.error.response?.status === 404
+
+  if (noEmployeeRecord) {
+    return (
+      <>
+        <header className="topbar">
+          <h2 className="topbar-title">Acme Corp</h2>
+        </header>
+        <main className="main">
+          <div className="main-content">
+            <section className="greeting">
+              <div>
+                <h2 className="greeting-title">Welcome back</h2>
+                <p className="greeting-subtitle">
+                  This account isn't linked to an employee record, so personal
+                  leave balances and requests aren't available. Admin/HR/manager
+                  accounts can still manage employees, policies, and approvals
+                  from the sidebar.
+                </p>
+              </div>
+            </section>
+          </div>
+        </main>
+      </>
+    )
+  }
+
   return (
     <>
       <header className="topbar">
@@ -149,7 +73,7 @@ function Dashboard({ onApply }: { onApply: () => void }) {
             Apply for Leave
           </button>
           <div className="avatar-sm">
-            <img src={avatar} alt="Jane Doe" />
+            <img src={avatar} alt="Profile" />
           </div>
         </div>
       </header>
@@ -157,27 +81,64 @@ function Dashboard({ onApply }: { onApply: () => void }) {
         <div className="main-content">
           <section className="greeting">
             <div>
-              <h2 className="greeting-title">Welcome back, Jane</h2>
+              <h2 className="greeting-title">Welcome back</h2>
               <p className="greeting-subtitle">
-                You have 2 pending leave requests and 1 upcoming approved trip.
+                You have {pendingCount} pending leave{' '}
+                {pendingCount === 1 ? 'request' : 'requests'}.
               </p>
-            </div>
-            <div className="employee-badge">
-              <span className="material-symbols-outlined">verified</span>
-              <span>Employee ID: EMP-2940-AC</span>
             </div>
           </section>
 
+          {(balancesQuery.isError || requestsQuery.isError) && (
+            <p className="detail-error">
+              {getErrorMessage(balancesQuery.error ?? requestsQuery.error)}
+            </p>
+          )}
+
           <section className="balances">
-            {leaveBalances.map((card) => (
-              <LeaveBalanceCard key={card.label} card={card} />
-            ))}
+            {(balances ?? []).map((card, i) => {
+              const colorClass = COLOR_CLASSES[i % COLOR_CLASSES.length]
+              const pct = card.quota
+                ? Math.round(((card.remaining ?? 0) / card.quota) * 100)
+                : 0
+              return (
+                <div key={card.leaveTypeCode} className="glass-card leave-card">
+                  <div className="leave-card-icon">
+                    <span className={`material-symbols-outlined icon-${colorClass}`}>
+                      {ICON_BY_CODE[card.leaveTypeCode] ?? 'event_note'}
+                    </span>
+                  </div>
+                  <span className="leave-card-label">
+                    {card.leaveTypeName.toUpperCase()}
+                  </span>
+                  <div className="leave-card-value">
+                    <span>{card.remaining ?? '—'}</span>
+                    <span className="leave-card-total">
+                      / {card.quota ?? '∞'} days
+                    </span>
+                  </div>
+                  {card.quota != null && (
+                    <div className="progress-track">
+                      <div
+                        className={`progress-bar bar-${colorClass}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  )}
+                  <div className="leave-card-footer">
+                    <span className={`text-${colorClass}`}>{card.used} used</span>
+                    {card.remaining != null && (
+                      <span className="text-secondary">{card.remaining} remaining</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </section>
 
           <section className="table-card">
             <div className="table-header">
               <h3>Upcoming Approved Leaves</h3>
-              <a href="#">View History</a>
             </div>
             <div className="table-wrap">
               <table>
@@ -187,62 +148,39 @@ function Dashboard({ onApply }: { onApply: () => void }) {
                     <th>Dates</th>
                     <th>Duration</th>
                     <th>Status</th>
-                    <th className="th-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {approvedLeaves.map((row) => (
-                    <tr key={`${row.type}-${row.dates}`}>
+                  {upcomingApproved.map((row) => (
+                    <tr key={row.id}>
                       <td>
                         <div className="leave-type">
-                          <div
-                            className={`leave-type-icon icon-${row.iconClass}`}
-                          >
+                          <div className="leave-type-icon icon-teal">
                             <span className="material-symbols-outlined">
-                              {row.icon}
+                              {ICON_BY_CODE[row.leaveTypeCode] ?? 'event_note'}
                             </span>
                           </div>
-                          <span>{row.type}</span>
+                          <span>{row.leaveTypeName}</span>
                         </div>
                       </td>
-                      <td className="td-dates">{row.dates}</td>
-                      <td className="td-muted">{row.duration}</td>
-                      <td>
-                        <span className={`badge badge-${row.statusClass}`}>
-                          {row.status}
-                        </span>
+                      <td className="td-dates">{formatDateRange(row.startDate, row.endDate)}</td>
+                      <td className="td-muted">
+                        {row.totalDays} {row.totalDays === 1 ? 'Day' : 'Days'}
                       </td>
-                      <td className="td-right">
-                        <button
-                          className="icon-button"
-                          aria-label="More options"
-                        >
-                          <span className="material-symbols-outlined">
-                            more_vert
-                          </span>
-                        </button>
+                      <td>
+                        <span className="badge badge-approved">Approved</span>
                       </td>
                     </tr>
                   ))}
+                  {upcomingApproved.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="td-muted">
+                        No approved upcoming leave.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
-            </div>
-          </section>
-
-          <section className="bottom-grid">
-            <Calendar />
-            <div className="policy-card">
-              <h4>Leave Policy Update</h4>
-              <p>
-                The new holiday carry-forward policy for 2024 has been updated.
-                You can now carry up to 10 days of earned leave to the next
-                fiscal year.
-              </p>
-              <a href="#">
-                Read Policy Document
-                <span className="material-symbols-outlined">open_in_new</span>
-              </a>
-              <div className="policy-glow" />
             </div>
           </section>
         </div>
