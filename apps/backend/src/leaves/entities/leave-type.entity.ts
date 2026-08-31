@@ -10,6 +10,9 @@ export class LeaveType extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name: string;
 
+  @Column({ type: 'int', name: 'annual_quota', nullable: true })
+  annualQuota?: number | null;
+
   @Column({ type: 'int', name: 'max_days_per_request', nullable: true })
   maxDaysPerRequest?: number | null;
 
